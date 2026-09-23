@@ -17,6 +17,11 @@ Todos los horarios viven en `data/horarios.json`. Al pulsar **Publicar**, la fun
 | `GITHUB_TOKEN` | Token *fine-grained* de GitHub con permiso **Contents: Read and write** solo sobre este repo |
 | `GITHUB_BRANCH` | Rama que publica Vercel (por defecto `main`) |
 | `GITHUB_REPO` | Opcional, por defecto `matiasizzo/horarios` |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Claves de los avisos push. Se generan en el editor con "Configurar avisos" |
+
+## Avisos push
+
+Cada empleado los activa desde su pantalla (en iPhone hace falta añadir la web a la pantalla de inicio, iOS 16.4+). Las suscripciones se guardan cifradas en `data/avisos.json`; los commits que solo cambian ese archivo no vuelven a desplegar la web. Desde el editor se avisa a todos cuando el horario está listo, o solo a quienes les cambió después.
 
 ## Probar en local
 
