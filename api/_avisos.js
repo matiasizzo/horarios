@@ -143,6 +143,8 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
   let enviados = 0;
   let fallidos = 0;
   const errores = [];
+  const recibieron = new Set();
+  const viejas = []; // suscripciones con claves anteriores, por empleado
 
   await Promise.all(avisos.suscripciones.map(async (s) => {
     const empleado = empleados.find((e) => e.id === s.empleado);
@@ -150,13 +152,13 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
     try {
       await webpush.sendNotification(s, JSON.stringify(mensaje(datos, semana, empleado, cambio)), { TTL: 60 * 60 * 24 * 3 });
       enviados++;
+      recibieron.add(empleado.id);
     } catch (e) {
       if (e.statusCode === 404 || e.statusCode === 410) caducadas.add(s.endpoint);
       else if (/VapidPkHashMismatch/.test(e.body || '')) {
         // Suscrita con claves anteriores: se borra y el móvil se renueva solo al abrir la app.
         caducadas.add(s.endpoint);
-        fallidos++;
-        errores.push(`${empleado.nombre}: tiene que abrir la app una vez para renovar los avisos`);
+        viejas.push(empleado);
       } else {
         fallidos++;
         const detalle = String(e.body || e.message || '').replace(/\s+/g, ' ').slice(0, 160);
@@ -165,6 +167,13 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
       }
     }
   }));
+
+  // Solo es un fallo si esa persona no recibió el aviso por ninguna otra suscripción.
+  for (const e of new Set(viejas)) {
+    if (recibieron.has(e.id)) continue;
+    fallidos++;
+    errores.push(`${e.nombre}: tiene que abrir la app una vez para renovar los avisos`);
+  }
 
   const conAviso = new Set(avisos.suscripciones.filter((s) => !caducadas.has(s.endpoint)).map((s) => s.empleado));
   const aplicar = (av) => {
