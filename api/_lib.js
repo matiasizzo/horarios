@@ -31,38 +31,57 @@ async function github(ruta, opciones = {}) {
   });
   if (!res.ok) {
     const texto = await res.text();
-    throw new Error(`GitHub ${res.status}: ${texto.slice(0, 200)}`);
+    throw Object.assign(new Error(`GitHub ${res.status}: ${texto.slice(0, 200)}`), { status: res.status });
   }
   return res.json();
 }
 
-export async function leerDatos() {
+// Lee un archivo del repo (o del disco en local). Devuelve null si no existe.
+export async function leerArchivo(ruta) {
   if (LOCAL || !process.env.GITHUB_TOKEN) {
-    const texto = await readFile(path.join(process.cwd(), RUTA_DATOS), 'utf8');
-    return { datos: JSON.parse(texto), sha: null };
+    try {
+      return { texto: await readFile(path.join(process.cwd(), ruta), 'utf8'), sha: null };
+    } catch (e) {
+      if (e.code === 'ENOENT') return null;
+      throw e;
+    }
   }
-  const archivo = await github(`contents/${RUTA_DATOS}?ref=${encodeURIComponent(RAMA)}`);
-  const texto = Buffer.from(archivo.content, 'base64').toString('utf8');
-  return { datos: JSON.parse(texto), sha: archivo.sha };
+  try {
+    const archivo = await github(`contents/${ruta}?ref=${encodeURIComponent(RAMA)}`);
+    return { texto: Buffer.from(archivo.content, 'base64').toString('utf8'), sha: archivo.sha };
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
 }
 
-export async function guardarDatos(datos, mensaje) {
-  const texto = JSON.stringify(datos, null, 2) + '\n';
+// Escribe un archivo en el repo. Con sha === undefined lo busca; con null lo crea.
+export async function guardarArchivo(ruta, texto, mensaje, sha) {
   if (LOCAL) {
-    await writeFile(path.join(process.cwd(), RUTA_DATOS), texto);
+    await writeFile(path.join(process.cwd(), ruta), texto);
     return;
   }
   if (!process.env.GITHUB_TOKEN) throw new Error('Falta configurar GITHUB_TOKEN en Vercel');
-  const { sha } = await leerDatos();
-  await github(`contents/${RUTA_DATOS}`, {
+  if (sha === undefined) sha = (await leerArchivo(ruta))?.sha ?? null;
+  await github(`contents/${ruta}`, {
     method: 'PUT',
     body: JSON.stringify({
       message: mensaje,
       content: Buffer.from(texto, 'utf8').toString('base64'),
-      sha,
+      ...(sha ? { sha } : {}),
       branch: RAMA,
     }),
   });
+}
+
+export async function leerDatos() {
+  const archivo = await leerArchivo(RUTA_DATOS);
+  if (!archivo) throw new Error(`No existe ${RUTA_DATOS}`);
+  return { datos: JSON.parse(archivo.texto), sha: archivo.sha };
+}
+
+export async function guardarDatos(datos, mensaje) {
+  await guardarArchivo(RUTA_DATOS, JSON.stringify(datos, null, 2) + '\n', mensaje);
 }
 
 const HORA = /^([01]\d|2[0-3]):(00|30)$/;

@@ -95,3 +95,32 @@ table.editor td.celda.vacia { color: var(--libre); }
   max-width: calc(100% - 32px);
   text-align: center;
 }
+
+.panel-avisos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.panel-avisos .espacio { flex: 1; }
+.panel-avisos .boton { padding: 9px 14px; }
+.panel-avisos .nota { flex-basis: 100%; font-size: 0.85rem; }
+.texto-suave { color: var(--texto-suave); }
+.ok { color: var(--ok); font-weight: 600; }
+.copiar { display: flex; gap: 8px; margin-bottom: 8px; }
+.copiar input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo);
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+.copiar .boton { padding: 8px 12px; }

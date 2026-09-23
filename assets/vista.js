@@ -4,6 +4,7 @@ import {
   formatoTramo, lunesDe, minutosDia, minutosSemana, ordenHora, rangoSemana, semanaVigente,
   semanasPasadas,
 } from './common.js';
+import { estadoAvisos, soporte, cargarAvisos, activarAvisos, desactivarAvisos } from './avisos.js';
 
 const app = document.getElementById('app');
 let datos = null;
@@ -90,6 +91,7 @@ function pantallaPersona(id) {
         <span class="total">${formatoHoras(minutosSemana(dias))} <small>h esta semana</small></span>
       </div>
       <div class="dias">${tarjetas}</div>
+      ${tarjetaAvisos(e)}
       <div class="acciones">
         <a class="boton secundario" href="#/equipo" data-area="${e.area}">Ver todo el equipo</a>
       </div>
@@ -177,6 +179,54 @@ function pantallaPasados() {
     </main>`;
 }
 
+// --- Avisos push ---
+
+let avisoOcupado = false;
+let avisoError = '';
+
+function tarjetaAvisos(e) {
+  if (!estadoAvisos.publica) return '';
+  const tipo = soporte();
+  let contenido;
+  if (tipo === 'ios-sin-instalar') {
+    contenido = '<p>Para recibir avisos en el iPhone, primero añade esta web a la pantalla de inicio y ábrela desde ese icono.</p>';
+  } else if (tipo !== 'ok') {
+    return '';
+  } else if (estadoAvisos.permiso === 'denied') {
+    contenido = '<p>Los avisos están bloqueados en este móvil. Actívalos en los ajustes de notificaciones del navegador o de la app.</p>';
+  } else if (estadoAvisos.empleado === e.id) {
+    contenido = `<p><b>✓ Avisos activados.</b> Te llegará un aviso cuando se publique tu horario.</p>
+      <button class="link-btn" data-avisos="desactivar" ${avisoOcupado ? 'disabled' : ''}>Desactivar avisos</button>`;
+  } else {
+    const otro = estadoAvisos.empleado && empleado(datos, estadoAvisos.empleado);
+    contenido = `
+      <p>${otro ? `Este móvil recibe ahora los avisos de <b>${escapar(otro.nombre)}</b>.` : 'Recibe un aviso en el móvil cuando se publique tu horario.'}</p>
+      <button class="boton" data-avisos="activar" data-emp="${e.id}" ${avisoOcupado ? 'disabled' : ''}>
+        ${avisoOcupado ? 'Activando…' : otro ? `Recibir los avisos de ${escapar(e.nombre)}` : 'Activar avisos'}
+      </button>`;
+  }
+  return `
+    <div class="instalar">
+      <div class="instalar-titulo">Avisos</div>
+      ${contenido}
+      ${avisoError ? `<p class="error-aviso">${escapar(avisoError)}</p>` : ''}
+    </div>`;
+}
+
+async function accionAvisos(boton) {
+  avisoOcupado = true;
+  avisoError = '';
+  render();
+  try {
+    if (boton.dataset.avisos === 'activar') await activarAvisos(boton.dataset.emp);
+    else await desactivarAvisos();
+  } catch (err) {
+    avisoError = estadoAvisos.permiso === 'denied' ? '' : `No se pudieron activar: ${err.message}`;
+  }
+  avisoOcupado = false;
+  render();
+}
+
 // --- Acceso directo en la pantalla de inicio del móvil ---
 
 let eventoInstalar = null;
@@ -232,6 +282,8 @@ app.addEventListener('click', async (ev) => {
     eventoInstalar = null;
     return render();
   }
+  const botonAvisos = ev.target.closest('[data-avisos]');
+  if (botonAvisos) return accionAvisos(botonAvisos);
   if (ev.target.closest('[data-ocultar-aviso]')) {
     try { localStorage.setItem('horarios-sin-aviso', '1'); } catch { /* sin almacenamiento */ }
     return render();
@@ -263,6 +315,7 @@ async function iniciar() {
 }
 
 iniciar();
+cargarAvisos(() => datos && render()).then(() => datos && render());
 
 // Como app instalada puede quedar abierta días: al volver a ella se recargan los horarios.
 document.addEventListener('visibilitychange', () => {

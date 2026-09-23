@@ -17,6 +17,9 @@ const estado = {
   area: 'sala',
   sucio: false,
   publicando: false,
+  // Estado de los avisos de la semana seleccionada (null = cargando o no disponible).
+  avisos: null,
+  avisando: false,
 };
 
 // --- Almacenamiento local (puede fallar en modo privado) ---
@@ -38,7 +41,7 @@ function toast(mensaje) {
   t.className = 'toast';
   t.textContent = mensaje;
   document.body.append(t);
-  setTimeout(() => t.remove(), 3500);
+  setTimeout(() => t.remove(), Math.max(3500, mensaje.length * 70));
 }
 
 async function api(ruta, cuerpo) {
@@ -113,6 +116,119 @@ async function cargar() {
     estado.semana = semanaVigente(estado.datos) || fechas.at(-1) || null;
   }
   render();
+  cargarEstadoAvisos();
+}
+
+// --- Avisos a los empleados ---
+
+async function cargarEstadoAvisos() {
+  estado.avisos = null;
+  if (!estado.semana) return render();
+  const semana = estado.semana;
+  try {
+    const r = await api('avisos', { pin: estado.pin, accion: 'estado', semana });
+    if (semana === estado.semana) estado.avisos = r;
+  } catch (e) {
+    if (semana === estado.semana) estado.avisos = { error: e.message };
+  }
+  render();
+}
+
+function panelAvisos() {
+  const a = estado.avisos;
+  if (!estado.semana) return '';
+  let cuerpo;
+  if (!a) cuerpo = '<span class="texto-suave">Cargando avisos…</span>';
+  else if (a.error) {
+    cuerpo = /no está publicada/.test(a.error)
+      ? '<span class="texto-suave">Publica esta semana para poder avisar a los empleados.</span>'
+      : `<span class="texto-suave">Avisos no disponibles: ${escapar(a.error)}</span>`;
+  } else if (!a.configurado) {
+    cuerpo = `<span>Los avisos al móvil todavía no están configurados.</span>
+      <span class="espacio"></span>
+      <button class="boton secundario" data-accion="configurar-avisos">Configurar avisos</button>`;
+  } else {
+    const total = estado.datos.empleados.sala.length + estado.datos.empleados.cocina.length;
+    const nombres = (ids) => ids.map((id) => [...estado.datos.empleados.sala, ...estado.datos.empleados.cocina]
+      .find((e) => e.id === id)?.nombre).filter(Boolean).join(', ');
+    const activos = `<span class="texto-suave">${a.suscritos.length} de ${total} con avisos activados</span>`;
+    const bloqueo = estado.sucio ? 'disabled title="Publica los cambios antes de avisar"' : '';
+    const ocupado = estado.avisando ? 'disabled' : '';
+    let accion;
+    if (!a.avisada) {
+      accion = `<button class="boton" data-accion="avisar-todos" ${bloqueo} ${ocupado}>
+        ${estado.avisando ? 'Enviando…' : 'Avisar a todos: horario listo'}</button>`;
+    } else if (a.cambiados.length) {
+      accion = `<span>Cambió el horario de <b>${escapar(nombres(a.cambiados))}</b></span>
+        <button class="boton" data-accion="avisar-cambios" ${bloqueo} ${ocupado}>
+        ${estado.avisando ? 'Enviando…' : `Avisar a ${a.cambiados.length === 1 ? 'esa persona' : `esas ${a.cambiados.length} personas`}`}</button>`;
+    } else {
+      accion = `<span class="ok">✓ Semana avisada, sin cambios desde el aviso</span>
+        <button class="link-btn" data-accion="avisar-todos" ${bloqueo} ${ocupado}>Enviar de nuevo a todos</button>`;
+    }
+    const futura = estado.semana > lunesDe()
+      ? `<div class="texto-suave nota">Los empleados verán esta semana en la app a partir del lunes ${diaDelMes(estado.semana, 0)}.</div>` : '';
+    cuerpo = `${activos}<span class="espacio"></span>${accion}${futura}`;
+  }
+  return `<div class="panel-avisos"><b>Avisos</b>${cuerpo}</div>`;
+}
+
+async function avisar(solo) {
+  const texto = solo === 'cambios'
+    ? '¿Enviar el aviso de cambio solo a las personas a las que les cambió el horario?'
+    : `¿Enviar a todos el aviso con su horario de la semana ${rangoSemana(estado.semana)}?`;
+  if (!confirm(texto)) return;
+  estado.avisando = true;
+  render();
+  try {
+    const r = await api('avisos', { pin: estado.pin, accion: 'enviar', semana: estado.semana, solo });
+    let msj = `Avisos enviados: ${r.enviados}.`;
+    if (r.fallidos) msj += ` Fallaron ${r.fallidos}.`;
+    if (r.sinAvisos.length) msj += ` Sin avisos activados: ${r.sinAvisos.join(', ')}.`;
+    toast(msj);
+  } catch (e) {
+    toast(`No se pudieron enviar: ${e.message}`);
+  }
+  estado.avisando = false;
+  cargarEstadoAvisos();
+}
+
+function base64url(bytes) {
+  return btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Genera las claves en este dispositivo: la privada nunca pasa por ningún servidor ni chat.
+async function abrirConfigurarAvisos() {
+  const par = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const publica = base64url(await crypto.subtle.exportKey('raw', par.publicKey));
+  const privada = (await crypto.subtle.exportKey('jwk', par.privateKey)).d;
+  const fondo = document.createElement('div');
+  fondo.className = 'hoja-fondo';
+  const campo = (nombre, valor) => `
+    <div class="etq">${nombre}</div>
+    <div class="copiar"><input readonly value="${valor}"><button class="boton secundario" data-copiar="${valor}">Copiar</button></div>`;
+  fondo.innerHTML = `
+    <div class="hoja" role="dialog" aria-label="Configurar avisos" style="max-width:560px">
+      <h3>Configurar avisos</h3>
+      <div class="sub">Añade estas dos variables en Vercel → tu proyecto → Settings → Environment Variables, y luego haz <b>Redeploy</b>.</div>
+      ${campo('VAPID_PUBLIC_KEY', publica)}
+      ${campo('VAPID_PRIVATE_KEY', privada)}
+      <p class="texto-suave">La clave privada es secreta: no la compartas. Si la cambias más adelante, cada empleado tendrá que volver a activar los avisos.</p>
+      <div class="fila-botones"><button class="boton" data-cerrar>Listo</button></div>
+    </div>`;
+  fondo.addEventListener('click', async (ev) => {
+    if (ev.target === fondo || ev.target.closest('[data-cerrar]')) return fondo.remove();
+    const b = ev.target.closest('[data-copiar]');
+    if (b) {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copiar);
+        b.textContent = 'Copiada';
+      } catch {
+        b.previousElementSibling.select();
+      }
+    }
+  });
+  document.body.append(fondo);
 }
 
 function marcarCambio() {
@@ -168,6 +284,7 @@ function render() {
         </button>
       </div>
       ${estado.semana ? `
+        ${panelAvisos()}
         <div class="barra">
           <div class="pestanas">${pestanas}</div>
           <span class="espacio"></span>
@@ -325,6 +442,7 @@ async function publicar() {
     estado.sucio = false;
     local.borrar(CLAVE_BORRADOR);
     toast('Publicado. Los empleados lo verán en 1 o 2 minutos.');
+    cargarEstadoAvisos();
   } catch (e) {
     if (e.status === 401) {
       local.borrar(CLAVE_PIN, sessionStorage);
@@ -360,7 +478,15 @@ app.addEventListener('click', (ev) => {
     estado.area = b.dataset.area;
     return render();
   }
-  const acciones = { nueva: abrirNuevaSemana, publicar, borrar: borrarSemana, imagen };
+  const acciones = {
+    nueva: abrirNuevaSemana,
+    publicar,
+    borrar: borrarSemana,
+    imagen,
+    'configurar-avisos': abrirConfigurarAvisos,
+    'avisar-todos': () => avisar('todos'),
+    'avisar-cambios': () => avisar('cambios'),
+  };
   acciones[b.dataset.accion]?.();
 });
 
@@ -368,6 +494,7 @@ app.addEventListener('change', (ev) => {
   if (ev.target.id === 'semana') {
     estado.semana = ev.target.value;
     render();
+    cargarEstadoAvisos();
   }
 });
 

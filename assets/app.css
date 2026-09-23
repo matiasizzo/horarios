@@ -208,3 +208,5 @@ table.semana .libre { color: var(--libre); }
 .instalar-titulo { font-weight: 700; margin-bottom: 2px; }
 .instalar p { margin: 4px 0 8px; }
 .instalar .boton { width: 100%; margin: 8px 0 4px; }
+.dias + .instalar { margin-top: 16px; }
+.error-aviso { color: var(--peligro); }
