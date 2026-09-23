@@ -11,9 +11,12 @@ const MAX_SUSCRIPCIONES = 100;
 // Solo se aceptan direcciones de los servicios de push de los navegadores.
 const HOSTS_PUSH = /(^|\.)(fcm\.googleapis\.com|push\.apple\.com|push\.services\.mozilla\.com|notify\.windows\.com)$/;
 
+// Quita espacios, saltos de línea, comillas y el "=" final que se cuelan al pegar en Vercel.
+const limpiar = (v) => (v || '').replace(/[\s"']/g, '').replace(/=+$/, '');
+
 export function clavesAvisos() {
-  const publica = process.env.VAPID_PUBLIC_KEY;
-  const privada = process.env.VAPID_PRIVATE_KEY;
+  const publica = limpiar(process.env.VAPID_PUBLIC_KEY);
+  const privada = limpiar(process.env.VAPID_PRIVATE_KEY);
   return publica && privada ? { publica, privada } : null;
 }
 
@@ -25,14 +28,14 @@ export function clavesCoinciden() {
   try {
     const ecdh = createECDH('prime256v1');
     ecdh.setPrivateKey(Buffer.from(claves.privada, 'base64url'));
-    return ecdh.getPublicKey().toString('base64url') === claves.publica.replace(/=+$/, '');
+    return ecdh.getPublicKey().toString('base64url') === claves.publica;
   } catch {
     return false;
   }
 }
 
 function claveCifrado() {
-  return createHash('sha256').update(`horarios-avisos:${process.env.VAPID_PRIVATE_KEY}`).digest();
+  return createHash('sha256').update(`horarios-avisos:${clavesAvisos()?.privada}`).digest();
 }
 
 // El repo es público: el archivo se guarda cifrado con una clave derivada de VAPID_PRIVATE_KEY.

@@ -203,10 +203,19 @@ function base64url(bytes) {
 }
 
 // Genera las claves en este dispositivo: la privada nunca pasa por ningún servidor ni chat.
+// Se recuerdan durante la sesión para que reabrir el cuadro muestre siempre la misma pareja.
 async function abrirConfigurarAvisos() {
-  const par = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
-  const publica = base64url(await crypto.subtle.exportKey('raw', par.publicKey));
-  const privada = (await crypto.subtle.exportKey('jwk', par.privateKey)).d;
+  let claves = null;
+  try { claves = JSON.parse(sessionStorage.getItem('horarios-vapid')); } catch { /* sin almacenamiento */ }
+  if (!claves) {
+    const par = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+    claves = {
+      publica: base64url(await crypto.subtle.exportKey('raw', par.publicKey)),
+      privada: (await crypto.subtle.exportKey('jwk', par.privateKey)).d,
+    };
+    try { sessionStorage.setItem('horarios-vapid', JSON.stringify(claves)); } catch { /* sin almacenamiento */ }
+  }
+  const { publica, privada } = claves;
   const fondo = document.createElement('div');
   fondo.className = 'hoja-fondo';
   const campo = (nombre, valor) => `
@@ -215,7 +224,8 @@ async function abrirConfigurarAvisos() {
   fondo.innerHTML = `
     <div class="hoja" role="dialog" aria-label="Configurar avisos" style="max-width:560px">
       <h3>Configurar avisos</h3>
-      <div class="sub">Añade estas dos variables en Vercel → tu proyecto → Settings → Environment Variables, y luego haz <b>Redeploy</b>.</div>
+      <div class="sub">En Vercel → tu proyecto → Settings → Environment Variables crea <b>dos variables separadas</b>:
+        en “Key” el nombre y en “Value” su código. Si ya existían, edítalas y reemplaza el valor. Después haz <b>Redeploy</b>.</div>
       ${campo('VAPID_PUBLIC_KEY', publica)}
       ${campo('VAPID_PRIVATE_KEY', privada)}
       <p class="texto-suave">La clave privada es secreta: no la compartas. Si la cambias más adelante, cada empleado tendrá que volver a activar los avisos.</p>
