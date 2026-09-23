@@ -152,7 +152,12 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
       enviados++;
     } catch (e) {
       if (e.statusCode === 404 || e.statusCode === 410) caducadas.add(s.endpoint);
-      else {
+      else if (/VapidPkHashMismatch/.test(e.body || '')) {
+        // Suscrita con claves anteriores: se borra y el móvil se renueva solo al abrir la app.
+        caducadas.add(s.endpoint);
+        fallidos++;
+        errores.push(`${empleado.nombre}: tiene que abrir la app una vez para renovar los avisos`);
+      } else {
         fallidos++;
         const detalle = String(e.body || e.message || '').replace(/\s+/g, ' ').slice(0, 160);
         errores.push(`${empleado.nombre}: ${e.statusCode ?? 'sin respuesta'} ${detalle}`.trim());

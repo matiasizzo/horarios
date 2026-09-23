@@ -31,11 +31,22 @@ function claveBinaria(base64url) {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
+function base64url(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Una suscripción creada con otra clave pública (p. ej. antes de cambiar las claves) ya no sirve.
+function mismaClave(sub) {
+  const clave = sub.options?.applicationServerKey;
+  if (!clave) return true; // El navegador no la expone: no se puede comprobar.
+  return base64url(clave) === String(estadoAvisos.publica).replace(/=+$/, '');
+}
+
 async function registro() {
   return navigator.serviceWorker.register('/sw.js');
 }
 
-async function enviar(cuerpo) {
+async function pedir(cuerpo) {
   const res = await fetch('/api/suscribir', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,6 +54,7 @@ async function enviar(cuerpo) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error || `Error ${res.status}`);
+  return json;
 }
 
 // Carga el estado al abrir la app. Nunca lanza: si algo falla, los avisos simplemente no se muestran.
@@ -60,7 +72,18 @@ export async function cargarAvisos(alCambiar) {
   try {
     const reg = await registro();
     const sub = await reg.pushManager.getSubscription();
-    estadoAvisos.empleado = sub ? leerLocal() : null;
+    const empleado = leerLocal();
+    if (sub && empleado && estadoAvisos.publica && Notification.permission === 'granted') {
+      // Si cambiaron las claves o el servidor ya no la tiene, se renueva sin que el empleado haga nada.
+      const vigente = mismaClave(sub)
+        && (await pedir({ comprobar: true, empleado, suscripcion: sub.toJSON() })).existe;
+      if (!vigente) {
+        await sub.unsubscribe();
+        await activarAvisos(empleado);
+        return;
+      }
+    }
+    estadoAvisos.empleado = sub ? empleado : null;
     if (!sub) guardarLocal(null);
   } catch {
     estadoAvisos.empleado = null;
@@ -74,13 +97,17 @@ export async function activarAvisos(empleado) {
   const reg = await registro();
   await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
+  if (sub && !mismaClave(sub)) {
+    await sub.unsubscribe();
+    sub = null;
+  }
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: claveBinaria(estadoAvisos.publica),
     });
   }
-  await enviar({ empleado, suscripcion: sub.toJSON() });
+  await pedir({ empleado, suscripcion: sub.toJSON() });
   guardarLocal(empleado);
   estadoAvisos.empleado = empleado;
 }
@@ -89,7 +116,7 @@ export async function desactivarAvisos() {
   const reg = await registro();
   const sub = await reg.pushManager.getSubscription();
   if (sub) {
-    await enviar({ baja: true, suscripcion: sub.toJSON() }).catch(() => {});
+    await pedir({ baja: true, suscripcion: sub.toJSON() }).catch(() => {});
     await sub.unsubscribe();
   }
   guardarLocal(null);
