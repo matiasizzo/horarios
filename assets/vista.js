@@ -52,6 +52,7 @@ function pantallaInicio() {
         ${vigente ? `<a class="boton" href="#/equipo">Ver todo el equipo</a>` : ''}
         ${hayPasadas ? `<a class="boton secundario" href="#/pasados">Horarios pasados</a>` : ''}
       </div>
+      ${avisoInstalar()}
     </main>`;
 }
 
@@ -176,6 +177,39 @@ function pantallaPasados() {
     </main>`;
 }
 
+// --- Acceso directo en la pantalla de inicio del móvil ---
+
+let eventoInstalar = null;
+window.addEventListener('beforeinstallprompt', (ev) => {
+  ev.preventDefault();
+  eventoInstalar = ev;
+  render();
+});
+
+function yaInstalada() {
+  return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+
+function avisoOculto() {
+  try { return localStorage.getItem('horarios-sin-aviso') === '1'; } catch { return false; }
+}
+
+function avisoInstalar() {
+  if (!datos || yaInstalada() || avisoOculto()) return '';
+  const esIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  let como;
+  if (eventoInstalar) como = '<button class="boton" data-instalar>Añadir a la pantalla de inicio</button>';
+  else if (esIos) como = '<p>En Safari toca <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.</p>';
+  else como = '<p>Abre el menú del navegador <b>⋮</b> y toca <b>Añadir a pantalla de inicio</b> o <b>Instalar app</b>.</p>';
+  return `
+    <div class="instalar">
+      <div class="instalar-titulo">Tenla siempre a mano</div>
+      <p>Añade esta web a tu móvil y ábrela como una app, sin instalar nada.</p>
+      ${como}
+      <button class="link-btn" data-ocultar-aviso>No mostrar más</button>
+    </div>`;
+}
+
 function pantallaNoEncontrada() {
   return `${cabecera('No encontrado', '', '#/')}<main><div class="vacio">Esta página no existe.</div></main>`;
 }
@@ -191,7 +225,17 @@ function render() {
   app.innerHTML = html;
 }
 
-app.addEventListener('click', (ev) => {
+app.addEventListener('click', async (ev) => {
+  if (ev.target.closest('[data-instalar]') && eventoInstalar) {
+    eventoInstalar.prompt();
+    await eventoInstalar.userChoice;
+    eventoInstalar = null;
+    return render();
+  }
+  if (ev.target.closest('[data-ocultar-aviso]')) {
+    try { localStorage.setItem('horarios-sin-aviso', '1'); } catch { /* sin almacenamiento */ }
+    return render();
+  }
   const b = ev.target.closest('[data-area],[data-dia],[data-modo]');
   if (!b) return;
   if (b.dataset.area) equipo.area = b.dataset.area;
@@ -213,8 +257,14 @@ async function iniciar() {
     datos = await res.json();
     render();
   } catch {
+    if (datos) return; // Si ya había datos, se siguen mostrando.
     app.innerHTML = `${cabecera('Horarios')}<main><div class="vacio">No se pudieron cargar los horarios. Revisa tu conexión y recarga la página.</div></main>`;
   }
 }
 
 iniciar();
+
+// Como app instalada puede quedar abierta días: al volver a ella se recargan los horarios.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') iniciar();
+});
