@@ -1,5 +1,5 @@
 import { pinValido, esperar, leerDatos } from './_lib.js';
-import { clavesAvisos, leerAvisos, modificarAvisos, estadoSemana, enviarAvisos } from './_avisos.js';
+import { clavesAvisos, clavesCoinciden, leerAvisos, modificarAvisos, estadoSemana, enviarAvisos } from './_avisos.js';
 
 // GET: clave pública para que los móviles se suscriban.
 // POST (con PIN): { accion: 'estado' | 'enviar', semana, solo: 'cambios' | 'todos' }.
@@ -14,6 +14,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'PIN incorrecto' });
   }
   if (!claves) return res.status(200).json({ configurado: false });
+  if (!clavesCoinciden()) return res.status(200).json({ configurado: true, clavesMal: true });
 
   try {
     const { datos } = await leerDatos();

@@ -124,3 +124,4 @@ table.editor td.celda.vacia { color: var(--libre); }
   font-size: 0.8rem;
 }
 .copiar .boton { padding: 8px 12px; }
+.error-aviso { color: var(--peligro); }

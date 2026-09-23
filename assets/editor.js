@@ -143,6 +143,11 @@ function panelAvisos() {
     cuerpo = /no está publicada/.test(a.error)
       ? '<span class="texto-suave">Publica esta semana para poder avisar a los empleados.</span>'
       : `<span class="texto-suave">Avisos no disponibles: ${escapar(a.error)}</span>`;
+  } else if (a.clavesMal) {
+    cuerpo = `<span class="error-aviso">Las dos claves de Vercel no son pareja (probablemente se copiaron de dos ventanas distintas).
+      Vuelve a “Configurar avisos”, copia <b>las dos</b> del mismo cuadro, haz Redeploy y activa de nuevo los avisos en los móviles.</span>
+      <span class="espacio"></span>
+      <button class="boton secundario" data-accion="configurar-avisos">Configurar avisos</button>`;
   } else if (!a.configurado) {
     cuerpo = `<span>Los avisos al móvil todavía no están configurados.</span>
       <span class="espacio"></span>
@@ -183,7 +188,7 @@ async function avisar(solo) {
   try {
     const r = await api('avisos', { pin: estado.pin, accion: 'enviar', semana: estado.semana, solo });
     let msj = `Avisos enviados: ${r.enviados}.`;
-    if (r.fallidos) msj += ` Fallaron ${r.fallidos}.`;
+    if (r.fallidos) msj += ` Fallaron ${r.fallidos} (${r.errores.join(' | ')}).`;
     if (r.sinAvisos.length) msj += ` Sin avisos activados: ${r.sinAvisos.join(', ')}.`;
     toast(msj);
   } catch (e) {

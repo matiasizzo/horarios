@@ -1,5 +1,5 @@
 // Avisos push: suscripciones cifradas en el repo y envío de mensajes personalizados.
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createECDH, createHash, randomBytes } from 'node:crypto';
 import webpush from 'web-push';
 import { leerArchivo, guardarArchivo } from './_lib.js';
 import {
@@ -15,6 +15,20 @@ export function clavesAvisos() {
   const publica = process.env.VAPID_PUBLIC_KEY;
   const privada = process.env.VAPID_PRIVATE_KEY;
   return publica && privada ? { publica, privada } : null;
+}
+
+// Comprueba que la clave pública corresponde a la privada (si se copiaron de dos
+// generaciones distintas, Apple y Google rechazan todos los envíos).
+export function clavesCoinciden() {
+  const claves = clavesAvisos();
+  if (!claves) return false;
+  try {
+    const ecdh = createECDH('prime256v1');
+    ecdh.setPrivateKey(Buffer.from(claves.privada, 'base64url'));
+    return ecdh.getPublicKey().toString('base64url') === claves.publica.replace(/=+$/, '');
+  } catch {
+    return false;
+  }
 }
 
 function claveCifrado() {
@@ -119,12 +133,13 @@ function mensaje(datos, semana, empleado, cambio) {
 // que aplica el resultado (semana avisada, suscripciones caducadas) al archivo.
 export async function enviarAvisos(datos, avisos, semana, ids, origen) {
   const { publica, privada } = clavesAvisos();
-  webpush.setVapidDetails(origen, publica, privada);
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || origen, publica, privada);
   const empleados = [...datos.empleados.sala, ...datos.empleados.cocina].filter((e) => ids.includes(e.id));
   const cambio = Boolean(avisos.avisadas[semana]);
   const caducadas = new Set();
   let enviados = 0;
   let fallidos = 0;
+  const errores = [];
 
   await Promise.all(avisos.suscripciones.map(async (s) => {
     const empleado = empleados.find((e) => e.id === s.empleado);
@@ -134,7 +149,12 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
       enviados++;
     } catch (e) {
       if (e.statusCode === 404 || e.statusCode === 410) caducadas.add(s.endpoint);
-      else fallidos++;
+      else {
+        fallidos++;
+        const detalle = String(e.body || e.message || '').replace(/\s+/g, ' ').slice(0, 160);
+        errores.push(`${empleado.nombre}: ${e.statusCode ?? 'sin respuesta'} ${detalle}`.trim());
+        console.error('Aviso fallido', new URL(s.endpoint).hostname, e.statusCode, e.body || e.message);
+      }
     }
   }));
 
@@ -145,7 +165,7 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
     for (const e of empleados) av.avisadas[semana][e.id] = JSON.stringify(diasDe(datos.semanas[semana], e.id));
   };
   return {
-    resumen: { enviados, fallidos, sinAvisos: empleados.filter((e) => !conAviso.has(e.id)).map((e) => e.nombre) },
+    resumen: { enviados, fallidos, errores, sinAvisos: empleados.filter((e) => !conAviso.has(e.id)).map((e) => e.nombre) },
     aplicar,
   };
 }
