@@ -1,0 +1,97 @@
+/* Estilos propios del editor (tablet). Se suman a app.css. */
+
+main.ancho { max-width: 1200px; }
+.cabecera-fila { max-width: 1200px; }
+
+.pin { max-width: 340px; margin: 48px auto; text-align: center; }
+.pin input {
+  width: 100%;
+  font-size: 1.6rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  margin: 12px 0;
+}
+.error { color: var(--peligro); font-size: 0.9rem; min-height: 1.2em; }
+
+.barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.barra select {
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  font-weight: 600;
+  min-width: 220px;
+}
+.barra .espacio { flex: 1; }
+.barra .boton { padding: 10px 14px; }
+.barra .pestanas { margin: 0; min-width: 220px; }
+
+.estado { font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; background: var(--marca-suave); color: var(--marca-fuerte); font-weight: 600; }
+.estado.sucio { background: var(--hoy); color: #7a5a00; }
+@media (prefers-color-scheme: dark) { .estado.sucio { color: #f0c24b; } }
+
+table.editor td.celda { cursor: pointer; min-width: 112px; height: 52px; }
+table.editor td.celda:hover { background: var(--marca-suave); }
+table.editor td.celda.vacia { color: var(--libre); }
+
+.hoja-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.4);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 50;
+}
+.hoja {
+  background: var(--superficie);
+  border-radius: 18px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.25);
+}
+.hoja h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.hoja .sub { color: var(--texto-suave); margin-bottom: 16px; }
+.hoja .tramo-edit { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.hoja .tramo-edit select {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+.hoja .tramo-edit .quitar { border: 0; background: none; color: var(--peligro); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
+.hoja .etq { font-size: 0.8rem; color: var(--texto-suave); margin: 8px 0 4px; }
+.hoja .fila-botones { display: flex; gap: 8px; margin-top: 16px; }
+.hoja .fila-botones .boton { flex: 1; }
+.hoja input[type="date"], .hoja select.completo {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo);
+  margin-bottom: 10px;
+}
+.boton.peligro { background: var(--superficie); color: var(--peligro); border: 1px solid var(--borde); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #1b2429;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  z-index: 60;
+  max-width: calc(100% - 32px);
+  text-align: center;
+}

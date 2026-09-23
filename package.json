@@ -1,0 +1,9 @@
+{
+  "name": "horarios",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "LOCAL_WRITE=1 ADMIN_PIN=${ADMIN_PIN:-123456} node scripts/dev.js"
+  },
+  "engines": { "node": ">=20" }
+}
