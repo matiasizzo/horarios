@@ -1,7 +1,7 @@
 // Avisos push: suscripciones cifradas en el repo y envío de mensajes personalizados.
-import { createCipheriv, createDecipheriv, createECDH, createHash, randomBytes } from 'node:crypto';
+import { createECDH, createHash } from 'node:crypto';
 import webpush from 'web-push';
-import { leerArchivo, guardarArchivo } from './_lib.js';
+import { leerArchivo, guardarArchivo, limpiar, cifrar, descifrar } from './_lib.js';
 import {
   DIAS_ABIERTOS, DIAS_CORTOS, diasDe, formatoHoras, minutosSemana, rangoSemana,
 } from '../assets/common.js';
@@ -10,9 +10,6 @@ const RUTA = 'data/avisos.json';
 const MAX_SUSCRIPCIONES = 100;
 // Solo se aceptan direcciones de los servicios de push de los navegadores.
 const HOSTS_PUSH = /(^|\.)(fcm\.googleapis\.com|push\.apple\.com|push\.services\.mozilla\.com|notify\.windows\.com)$/;
-
-// Quita espacios, saltos de línea, comillas y el "=" final que se cuelan al pegar en Vercel.
-const limpiar = (v) => (v || '').replace(/[\s"']/g, '').replace(/=+$/, '');
 
 export function clavesAvisos() {
   const publica = limpiar(process.env.VAPID_PUBLIC_KEY);
@@ -34,41 +31,19 @@ export function clavesCoinciden() {
   }
 }
 
+// El repo es público: el archivo se guarda cifrado con una clave derivada de VAPID_PRIVATE_KEY.
+const NOTA = 'Suscripciones a los avisos, cifradas.';
+
 function claveCifrado() {
   return createHash('sha256').update(`horarios-avisos:${clavesAvisos()?.privada}`).digest();
-}
-
-// El repo es público: el archivo se guarda cifrado con una clave derivada de VAPID_PRIVATE_KEY.
-function cifrar(obj) {
-  const iv = randomBytes(12);
-  const c = createCipheriv('aes-256-gcm', claveCifrado(), iv);
-  const datos = Buffer.concat([c.update(JSON.stringify(obj), 'utf8'), c.final()]);
-  return JSON.stringify({
-    nota: 'Suscripciones a los avisos, cifradas.',
-    iv: iv.toString('base64'),
-    tag: c.getAuthTag().toString('base64'),
-    datos: datos.toString('base64'),
-  }, null, 2) + '\n';
-}
-
-function descifrar(texto) {
-  try {
-    const { iv, tag, datos } = JSON.parse(texto);
-    const d = createDecipheriv('aes-256-gcm', claveCifrado(), Buffer.from(iv, 'base64'));
-    d.setAuthTag(Buffer.from(tag, 'base64'));
-    const plano = Buffer.concat([d.update(Buffer.from(datos, 'base64')), d.final()]).toString('utf8');
-    return JSON.parse(plano);
-  } catch {
-    // Si cambiaron las claves, las suscripciones viejas ya no sirven: se empieza de cero.
-    return null;
-  }
 }
 
 const vacio = () => ({ suscripciones: [], avisadas: {} });
 
 export async function leerAvisos() {
   const archivo = await leerArchivo(RUTA);
-  return { avisos: (archivo && descifrar(archivo.texto)) || vacio(), sha: archivo?.sha ?? null };
+  // Si cambiaron las claves, las suscripciones viejas ya no sirven: se empieza de cero.
+  return { avisos: (archivo && descifrar(archivo.texto, claveCifrado())) || vacio(), sha: archivo?.sha ?? null };
 }
 
 // Lee, modifica y guarda; reintenta si otra petición escribió a la vez.
@@ -77,7 +52,7 @@ export async function modificarAvisos(cambio, mensaje) {
     const { avisos, sha } = await leerAvisos();
     const resultado = await cambio(avisos);
     try {
-      await guardarArchivo(RUTA, cifrar(avisos), mensaje, sha);
+      await guardarArchivo(RUTA, cifrar(avisos, claveCifrado(), NOTA), mensaje, sha);
       return resultado;
     } catch (e) {
       if (intento < 3 && (e.status === 409 || e.status === 422)) continue;
@@ -185,4 +160,24 @@ export async function enviarAvisos(datos, avisos, semana, ids, origen) {
     resumen: { enviados, fallidos, errores, sinAvisos: empleados.filter((e) => !conAviso.has(e.id)).map((e) => e.nombre) },
     aplicar,
   };
+}
+
+// Envía el mismo mensaje a varias suscripciones (avisos del stock). Nunca lanza:
+// devuelve cuántos llegaron y las suscripciones que ya no sirven, para borrarlas.
+export async function enviarMensaje(suscripciones, mensaje, origen) {
+  const claves = clavesAvisos();
+  const caducadas = new Set();
+  if (!claves || !suscripciones.length) return { enviados: 0, caducadas };
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || origen, claves.publica, claves.privada);
+  let enviados = 0;
+  await Promise.all(suscripciones.map(async (s) => {
+    try {
+      await webpush.sendNotification(s, JSON.stringify(mensaje), { TTL: 60 * 60 * 24 });
+      enviados++;
+    } catch (e) {
+      if (e.statusCode === 404 || e.statusCode === 410 || /VapidPkHashMismatch/.test(e.body || '')) caducadas.add(s.endpoint);
+      else console.error('Aviso fallido', new URL(s.endpoint).hostname, e.statusCode, e.body || e.message);
+    }
+  }));
+  return { enviados, caducadas };
 }

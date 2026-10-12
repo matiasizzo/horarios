@@ -93,6 +93,7 @@ function pantallaPersona(id) {
       <div class="dias">${tarjetas}</div>
       ${tarjetaAvisos(e)}
       <div class="acciones">
+        ${e.area === 'cocina' ? `<a class="boton secundario" href="stock.html?yo=${e.id}">Control de stock</a>` : ''}
         <a class="boton secundario" href="#/equipo" data-area="${e.area}">Ver todo el equipo</a>
       </div>
     </main>`;

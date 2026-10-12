@@ -1,6 +1,6 @@
 // Lógica compartida de las funciones. Los archivos con "_" no son rutas en Vercel.
 import { readFile, writeFile } from 'node:fs/promises';
-import { timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 
 const RUTA_DATOS = 'data/horarios.json';
@@ -18,6 +18,35 @@ export function pinValido(pin) {
 
 // Frena los intentos de adivinar el PIN.
 export const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Quita espacios, saltos de línea, comillas y el "=" final que se cuelan al pegar en Vercel.
+export const limpiar = (v) => (v || '').replace(/[\s"']/g, '').replace(/=+$/, '');
+
+// El repo es público: lo que no deba verse se guarda cifrado (AES-256-GCM, clave de 32 bytes).
+export function cifrar(obj, clave, nota) {
+  const iv = randomBytes(12);
+  const c = createCipheriv('aes-256-gcm', clave, iv);
+  const datos = Buffer.concat([c.update(JSON.stringify(obj), 'utf8'), c.final()]);
+  return JSON.stringify({
+    nota,
+    iv: iv.toString('base64'),
+    tag: c.getAuthTag().toString('base64'),
+    datos: datos.toString('base64'),
+  }, null, 2) + '\n';
+}
+
+// Devuelve null si el texto no se puede descifrar con esa clave.
+export function descifrar(texto, clave) {
+  try {
+    const { iv, tag, datos } = JSON.parse(texto);
+    const d = createDecipheriv('aes-256-gcm', clave, Buffer.from(iv, 'base64'));
+    d.setAuthTag(Buffer.from(tag, 'base64'));
+    const plano = Buffer.concat([d.update(Buffer.from(datos, 'base64')), d.final()]).toString('utf8');
+    return JSON.parse(plano);
+  } catch {
+    return null;
+  }
+}
 
 async function github(ruta, opciones = {}) {
   const res = await fetch(`https://api.github.com/repos/${REPO}/${ruta}`, {

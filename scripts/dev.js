@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const PUERTO = Number(process.env.PORT) || 3000;
-const TIPOS = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
+const TIPOS = {
+  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.webmanifest': 'application/manifest+json',
+};
 
 function adaptarRes(res) {
   res.status = (c) => ((res.statusCode = c), res);

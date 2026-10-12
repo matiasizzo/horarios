@@ -58,13 +58,17 @@ async function pedir(cuerpo) {
 }
 
 // Carga el estado al abrir la app. Nunca lanza: si algo falla, los avisos simplemente no se muestran.
-export async function cargarAvisos(alCambiar) {
+export async function cargarClavePublica() {
   try {
     const res = await fetch('/api/avisos');
     estadoAvisos.publica = (await res.json()).publica;
   } catch {
     estadoAvisos.publica = null;
   }
+}
+
+export async function cargarAvisos(alCambiar) {
+  await cargarClavePublica();
   estadoAvisos.empleado = leerLocal();
   alCambiar?.();
   if (soporte() !== 'ok') return;
@@ -90,7 +94,8 @@ export async function cargarAvisos(alCambiar) {
   }
 }
 
-export async function activarAvisos(empleado) {
+// Pide permiso y devuelve la suscripción push de este móvil (la crea o la renueva si hace falta).
+export async function suscripcionPush() {
   const permiso = await Notification.requestPermission();
   estadoAvisos.permiso = permiso;
   if (permiso !== 'granted') throw new Error('Sin permiso para mostrar avisos');
@@ -107,6 +112,19 @@ export async function activarAvisos(empleado) {
       applicationServerKey: claveBinaria(estadoAvisos.publica),
     });
   }
+  return sub;
+}
+
+// La suscripción actual de este móvil, sin pedir permiso (null si no hay).
+export async function suscripcionActual() {
+  if (soporte() !== 'ok') return null;
+  const reg = await registro();
+  const sub = await reg.pushManager.getSubscription();
+  return sub && mismaClave(sub) ? sub : null;
+}
+
+export async function activarAvisos(empleado) {
+  const sub = await suscripcionPush();
   await pedir({ empleado, suscripcion: sub.toJSON() });
   guardarLocal(empleado);
   estadoAvisos.empleado = empleado;
