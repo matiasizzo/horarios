@@ -298,7 +298,7 @@ svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
           <p>Lo gastado en los albaranes subidos, lo que hay que revisar y cómo está el coste de los platos.</p>
         </div>
       </div>
-      <div class="aviso-maqueta"><span>ⓘ</span><span>Las cifras salen de los <b>5 albaranes reales</b> que mandaste (17–22 oct 2026). Lo marcado <span class="ej">Ejemplo</span> es inventado para enseñar la pantalla, y lo marcado <span class="est">Estimado</span> sale del Excel del TPV.</span></div>
+      <div class="aviso-maqueta"><span>ⓘ</span><span>Las cifras salen de los <b>5 albaranes reales</b> que mandaste (17–22 oct 2026). Los precios de venta son los de la <b>carta actual</b>. Lo marcado <span class="ej">Ejemplo</span> es inventado para enseñar la pantalla.</span></div>
       <div class="rejilla-4" id="cifras-resumen"></div>
       <div class="tarjeta">
         <h3>Para revisar</h3>
@@ -379,6 +379,14 @@ svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
         <tbody id="t-platos"></tbody>
       </table></div>
       <div class="tarjeta" id="calculadora"></div>
+      <div class="tarjeta">
+        <div class="titulo-vista" style="margin-bottom:4px"><div><h3>Carta actual</h3><p class="bajada" style="margin:2px 0 0" id="carta-cobertura"></p></div></div>
+        <div class="tabla-cont" style="margin-top:8px"><table>
+          <thead><tr><th>Plato</th><th class="d">Carta (con IVA)</th><th class="d">Sin IVA</th><th class="d">% coste</th><th>Escandallo</th></tr></thead>
+          <tbody id="t-carta"></tbody>
+        </table></div>
+        <p class="bajada" style="margin:10px 0 0">Pan: 0,50 € por persona · Terraza: 10 % de suplemento. Los precios de la carta llevan el 10 % de IVA incluido.</p>
+      </div>
     </section>
 
     <!-- VENTAS -->
@@ -483,16 +491,29 @@ const HISTORIAL_EJEMPLO = {
   'Lomo alto argentino (bife alto)': [['2026-06-16', 27.50], ['2026-07-14', 27.50], ['2026-08-18', 28.20], ['2026-09-22', 28.50], ['2026-10-21', 29.90]],
 };
 
-// Platos: precio de carta estimado = precio del Excel de 2025 ÷ 0,95 (supuesto del propio archivo).
+// Platos con escandallo: precios de la carta actual (IVA del 10 % incluido).
 const PLATOS = [
-  { id: 'entrecot250', nombre: 'Entrecot 250 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 250, pvp: 28.95, v2025: 43 },
-  { id: 'entrecot350', nombre: 'Entrecot 350 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 350, pvp: 38.95, v2025: 18 },
-  { id: 'solomillo', nombre: 'Solomillo de ternera', ing: 'Solomillo de ternera argentino', prov: 'Eurocampa', precioKg: 38.90, rend: 80, gramos: 250, pvp: 36.00, v2025: 25 },
-  { id: 'milanesa', nombre: 'Milanesa napolitana', ing: 'Redondo de ternera', prov: 'Escofet Oliver', precioKg: 12.10, rend: 85, gramos: 200, pvp: 16.95, v2025: 110, falta: 'pan rallado, huevo, tomate, mozzarella y jamón', gramosEj: true },
-  { id: 'burger', nombre: 'Burger bacon & cheddar', ing: 'Carne picada de vaca', prov: 'Escofet Oliver', precioKg: 12.50, rend: 100, gramos: 180, pvp: 16.95, v2025: 118, falta: 'pan, bacon y cheddar', gramosEj: true },
-  { id: 'entrana', nombre: 'Entraña', ing: 'Entraña', prov: 'Rubén Viñas', precioKg: null, rend: 85, gramos: 250, pvp: 18.00, v2025: 90 },
-  { id: 'vacio', nombre: 'Vacío', ing: 'Vacío', prov: null, precioKg: null, rend: 85, gramos: 250, pvp: 18.00, v2025: 49 },
-  { id: 'mollejas', nombre: 'Mollejas de ternera', ing: 'Mollejas de ternera', prov: 'Eduardo', precioKg: null, rend: 85, gramos: 250, pvp: 16.95, v2025: 18 },
+  { id: 'entrecot250', nombre: 'Entrecot 250 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 250, pvp: 31, v2025: 43 },
+  { id: 'entrecot350', nombre: 'Entrecot 350 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 350, pvp: 41, v2025: 18 },
+  { id: 'solomillo', nombre: 'Solomillo de ternera 250 g', ing: 'Solomillo de ternera argentino', prov: 'Eurocampa', precioKg: 38.90, rend: 80, gramos: 250, pvp: 37, v2025: 25, falta: 'milhojas de patata y salsa' },
+  { id: 'milanesa', nombre: 'Milanesa napolitana', ing: 'Redondo de ternera', prov: 'Escofet Oliver', precioKg: 12.10, rend: 85, gramos: 200, pvp: 17.5, v2025: 110, falta: 'rebozado, tomate, mozzarella y puré de patata', gramosEj: true },
+  { id: 'burger', nombre: 'Hamburguesa 250 g bacon y cheddar', ing: 'Carne picada de vaca', prov: 'Escofet Oliver', precioKg: 12.50, rend: 100, gramos: 250, pvp: 17, v2025: 118, falta: 'pan, cebolla caramelizada, bacon, cheddar y patatas fritas' },
+  { id: 'entrana', nombre: 'Entraña de ternera', ing: 'Entraña', prov: 'Rubén Viñas', precioKg: null, rend: 85, gramos: 250, pvp: 19, v2025: 90 },
+  { id: 'vacio', nombre: 'Vacío de ternera', ing: 'Vacío', prov: null, precioKg: null, rend: 85, gramos: 250, pvp: 18, v2025: 49 },
+  { id: 'mollejas', nombre: 'Mollejas de ternera', ing: 'Mollejas de ternera', prov: 'Eduardo', precioKg: null, rend: 85, gramos: 250, pvp: 18, v2025: 18 },
+];
+
+// Carta actual completa, por secciones: [nombre, precio con IVA, plato con escandallo].
+const CARTA = [
+  ['Parrilla', [['Entrecot de ternera argentina 250 g', 31, 'entrecot250'], ['Entrecot de ternera argentina 350 g', 41, 'entrecot350'], ['Entraña de ternera', 19, 'entrana'], ['Vacío de ternera', 18, 'vacio'], ['Mollejas de ternera', 18, 'mollejas'], ['Hamburguesa 250 g con cebolla, bacon y cheddar', 17, 'burger'], ['Hamburguesa 250 g con rúcula, tomate y huevo', 17], ['Costillas de cerdo marinadas', 17], ['Muslo de pollo marinado con limón', 17], ['Chorizo o morcilla criolla (unidad)', 3.9], ['Parrillada (2 personas)', 45]]],
+  ['Nuestra cocina', [['Solomillo de ternera argentina 250 g', 37, 'solomillo'], ['Milanesa napolitana', 17.5, 'milanesa'], ['Solomillo de cerdo ibérico', 17.5], ['Rulo de pollo', 17.5], ['Salmón a la plancha', 18.5]]],
+  ['Guarnición', [['Ración de patatas fritas', 7.5], ['Media ración de patatas fritas', 5.5], ['Media parrillada de verduras', 8], ['Puré de patata', 6], ['Gratén de patatas', 6.5]]],
+  ['Tapas y ensaladas', [['Crema del día', 7], ['Parrillada de verduras', 14], ['Antipasto Morelia', 15], ['Choripán', 5.5], ['Huevos estrellados con jamón', 8], ['Huevos estrellados con chorizo criollo', 8], ['Patatas fritas provenzal', 8], ['Pan con tomate', 6.5], ['Chipirones', 8.5], ['Gambas a la plancha (5 u)', 16], ['Tapa de hummus', 6], ['Croquetas de jamón ibérico (3 u)', 7.2], ['Ensalada caprese', 14], ['Ensalada tibia', 15], ['Ensalada Morelia', 15], ['Ensalada de rúcula', 13], ['Ensalada teriyaki', 16], ['Plato de jamón', 14], ['Boquerones fritos', 7], ['Patatas bravas', 6.5], ['Pimientos de padrón', 7]]],
+  ['Provoletas', [['Provoleta con orégano y ají', 11], ['Provoleta con tomates secos', 11], ['Provoleta con jamón serrano', 11], ['Provoleta con chimichurri', 11]]],
+  ['Empanadas', [['Empanada de carne cortada a cuchillo', 4], ['Empanada de pollo', 4], ['Empanada de jamón, mozzarella, albahaca y olivas', 4], ['Empanada de cebolla caramelizada, queso de cabra y nueces', 4]]],
+  ['Pastas', [['Linguini frutti di mare', 18], ['Tagliatelle a la crema de salmón', 18], ['Linguini con salsa a escoger', 17]]],
+  ['Risottos', [['Risotto verde', 16], ['Risotto funghi porcini', 17], ['Risotto del mar', 17.5]]],
+  ['Postres', [['Tiramisú Morelia', 7.5], ['Coulant de chocolate', 8.5], ['Panqueque de dulce de leche', 8], ['Crème brûlée', 6.5], ['Panacotta de coco', 8], ['Crumble de manzana', 7.5], ['Helados (2 bolas)', 6.5]]],
 ];
 
 // Ventas reales del listado nocturno (unidades por año).
@@ -535,7 +556,8 @@ function calcular(p) {
 
 function estadoCoste(porcentaje, incompleto) {
   if (porcentaje == null) return '<span class="estado neutro">Falta precio de compra</span>';
-  if (incompleto) return '<span class="estado neutro">Incompleto</span>';
+  if (incompleto && porcentaje > objetivo) return '<span class="estado mal">Alto solo con la carne</span>';
+  if (incompleto) return '<span class="estado neutro">Faltan ingredientes</span>';
   if (porcentaje <= objetivo) return '<span class="estado bien">En objetivo</span>';
   if (porcentaje <= objetivo + 0.05) return '<span class="estado aviso">Algo alto</span>';
   return '<span class="estado mal">Alto</span>';
@@ -555,13 +577,13 @@ function pintarResumen() {
   const base = ALBARANES.reduce((s, a) => s + a.base, 0);
   const incompletos = ALBARANES.filter((a) => a.total == null);
   const porRevisar = ALBARANES.filter((a) => a.estado !== 'revisado').length;
-  const conPrecio = PLATOS.filter((p) => p.precioKg && !p.falta).map((p) => ({ p, c: calcular(p) }));
+  const conPrecio = PLATOS.filter((p) => p.precioKg).map((p) => ({ p, c: calcular(p) }));
   const altos = conPrecio.filter(({ c }) => c.porcentaje > objetivo).length;
   $('#cifras-resumen').innerHTML = `
     <div class="cifra"><span class="et">Gastado (sin IVA)</span><span class="val">${eur(base)}</span><span class="det">5 albaranes · 17–22 oct</span></div>
     <div class="cifra"><span class="et">Albaranes por revisar</span><span class="val">${porRevisar}</span><span class="det">${incompletos.length} con páginas que faltan</span></div>
     <div class="cifra"><span class="et">Posible reclamación</span><span class="val">${eur(17.10 * 1.10)}</span><span class="det">Fanta naranja no entregada, con IVA</span></div>
-    <div class="cifra"><span class="et">Platos por encima del objetivo</span><span class="val">${altos} de ${conPrecio.length}</span><span class="det">con escandallo completo</span></div>`;
+    <div class="cifra"><span class="et">Platos por encima del objetivo</span><span class="val">${altos} de ${conPrecio.length}</span><span class="det">de los que tienen precio de compra</span></div>`;
 
   $('#alertas').innerHTML = [
     { tipo: 'mal', ico: '!', titulo: 'Coca-Cola cobra algo que no llegó', texto: 'La Fanta naranja está anotada a mano "No cargado", pero sus 17,10 € (+ IVA) siguen sumados en el albarán 4538208589.', boton: 'Ver albarán', ir: 'cocacola' },
@@ -585,9 +607,9 @@ function pintarResumen() {
   barras($('#g-proveedor'), Object.entries(provs).map(([etiqueta, d]) => ({ etiqueta, valor: d.valor, marca: d.incompleto ? 'inc' : null, extra: d.incompleto ? 'falta la página 2' : '' })).sort((a, b) => b.valor - a.valor), base);
   $('#nota-incompletos').textContent = 'los marcados no tienen todas sus páginas';
   $('#obj-resumen').textContent = pct(objetivo);
-  $('#t-resumen-platos').innerHTML = PLATOS.slice(0, 5).map((p) => {
+  $('#t-resumen-platos').innerHTML = PLATOS.filter((p) => p.precioKg).map((p) => {
     const c = calcular(p);
-    return `<tr class="clic" data-plato="${p.id}"><td>${esc(p.nombre)}</td><td class="d">${p.falta ? '≥ ' : ''}${eur(c.coste)}</td><td class="d">${eur(p.pvp)} <span class="est">Estimado</span></td><td class="d">${p.falta ? '≥ ' : ''}${pct(c.porcentaje)}</td><td>${estadoCoste(c.porcentaje, !!p.falta)}</td></tr>`;
+    return `<tr class="clic" data-plato="${p.id}"><td>${esc(p.nombre)}</td><td class="d">${p.falta ? '≥ ' : ''}${eur(c.coste)}</td><td class="d">${eur(p.pvp)}</td><td class="d">${p.falta ? '≥ ' : ''}${pct(c.porcentaje)}</td><td>${estadoCoste(c.porcentaje, !!p.falta)}</td></tr>`;
   }).join('');
 }
 
@@ -741,7 +763,23 @@ function pintarPlatos() {
   pintarCalculadora();
 }
 
+function pintarCarta() {
+  const total = CARTA.reduce((n, [, platos]) => n + platos.length, 0);
+  const con = CARTA.reduce((n, [, platos]) => n + platos.filter(([, , id]) => id && calcular(PLATOS.find((p) => p.id === id))).length, 0);
+  $('#carta-cobertura').textContent = `${con} de ${total} platos tienen ya el coste de su ingrediente principal. El resto se irá completando con los albaranes y las cantidades del jefe.`;
+  $('#t-carta').innerHTML = CARTA.map(([seccion, platos]) => `
+    <tr><td colspan="5" style="background:var(--superficie-2);font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--texto-3)">${esc(seccion)}</td></tr>
+    ${platos.map(([nombre, precio, id]) => {
+      const plato = id && PLATOS.find((p) => p.id === id);
+      const c = plato && calcular(plato);
+      return `<tr${plato ? ` class="clic" data-plato="${plato.id}"` : ''}><td>${esc(nombre)}</td><td class="d">${eur(precio)}</td><td class="d">${eur(precio / 1.10)}</td>
+        <td class="d">${c ? `${plato.falta ? '≥ ' : ''}${pct(c.porcentaje)}` : '—'}</td>
+        <td>${plato ? estadoCoste(c ? c.porcentaje : null, !!plato.falta) : '<span style="color:var(--texto-3)">Sin escandallo</span>'}</td></tr>`;
+    }).join('')}`).join('');
+}
+
 function pintarTablaPlatos() {
+  pintarCarta();
   $('#t-platos').innerHTML = PLATOS.map((p) => {
     const c = calcular(p);
     return `<tr class="clic" data-plato="${p.id}" aria-selected="${p.id === platoSel}">
@@ -770,7 +808,7 @@ function pintarCalculadora() {
       <div><h3 style="font-size:1.15rem">${esc(p.nombre)}</h3>
       <p class="bajada" style="margin:2px 0 0">${esc(p.ing)} · ${esc(p.prov)} · precio del último albarán</p></div>
     </div>
-    ${p.falta ? `<div class="nota-falta" style="margin-bottom:12px">Solo está la carne. Faltan ${esc(p.falta)}: el coste real es más alto.</div>` : ''}
+    ${p.falta ? `<div class="nota-falta" style="margin-bottom:12px">Solo está la carne. Faltan ${esc(p.falta)}: el coste real es más alto que lo que se ve aquí.</div>` : ''}
     <div class="calc">
       <div class="campos">
         <div class="campo"><label for="c-precio">Precio de compra (€/kg, sin IVA)</label><input type="number" id="c-precio" step="0.01" min="0" value="${p.precioKg}"></div>
@@ -780,7 +818,7 @@ function pintarCalculadora() {
           <input type="range" id="c-rend" min="50" max="100" step="1" value="${p.rend}">
           <span class="bajada" style="margin:0" id="c-raciones"></span>
         </div>
-        <div class="campo"><label for="c-pvp">Precio en carta (con IVA) <span class="est">Estimado</span></label><input type="number" id="c-pvp" step="0.05" min="0" value="${p.pvp}"></div>
+        <div class="campo"><label for="c-pvp">Precio en carta (con IVA)</label><input type="number" id="c-pvp" step="0.05" min="0" value="${p.pvp}"></div>
         <div class="campo"><label for="c-pvp-sin">Precio en carta sin IVA (10 %)</label><input type="number" id="c-pvp-sin" disabled></div>
       </div>
       <div class="resultado" id="calc-res"></div>
