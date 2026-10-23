@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0a86ab">
+  <title>Gestión Morelia</title>
+  <link rel="icon" href="assets/icono.svg" type="image/svg+xml">
+<style>
+/* Layout: barra de secciones a la izquierda y área de trabajo; en el móvil las secciones pasan a una fila de pestañas arriba. Misma marca que la app de horarios. */
+:root {
+  --marca: #0a86ab;
+  --marca-fuerte: #07698a;
+  --marca-suave: #e3f3f8;
+  --cabecera: #0a86ab;
+  --fondo: #f2f5f6;
+  --superficie: #ffffff;
+  --superficie-2: #f6f9fa;
+  --texto: #1b2429;
+  --texto-2: #4c5a61;
+  --texto-3: #6f7f87;
+  --borde: #dbe3e6;
+  --rejilla: #e7eef0;
+  --barra: #0a86ab;
+  --barra-suave: #cfe8f0;
+  --bien: #0ca30c;
+  --aviso: #fab219;
+  --mal: #d03b3b;
+  --bien-txt: #0a6f0a;
+  --aviso-txt: #855400;
+  --mal-txt: #b02f2f;
+  --bien-fondo: #e6f4e6;
+  --aviso-fondo: #fff3d9;
+  --mal-fondo: #fbe8e8;
+  --ejemplo: #6a4fc0;
+  --ejemplo-fondo: #efeafb;
+  --sombra: 0 1px 2px rgb(16 40 48 / 0.06), 0 4px 14px rgb(16 40 48 / 0.05);
+  --f-texto: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radio: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --marca: #3fb4d8; --marca-fuerte: #6ccae6; --marca-suave: #173640; --cabecera: #0d4f63;
+    --fondo: #0f1417; --superficie: #172025; --superficie-2: #1c262b;
+    --texto: #e7eef1; --texto-2: #b4c3ca; --texto-3: #8b9ca4; --borde: #2a363c; --rejilla: #223035;
+    --barra: #3fb4d8; --barra-suave: #1f4350;
+    --bien-txt: #5fd08a; --aviso-txt: #f2c45a; --mal-txt: #ff8f8f;
+    --bien-fondo: #15301f; --aviso-fondo: #3a2c12; --mal-fondo: #3a1d1d;
+    --ejemplo: #b6a6f0; --ejemplo-fondo: #2a2442; --sombra: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --marca: #3fb4d8; --marca-fuerte: #6ccae6; --marca-suave: #173640; --cabecera: #0d4f63;
+  --fondo: #0f1417; --superficie: #172025; --superficie-2: #1c262b;
+  --texto: #e7eef1; --texto-2: #b4c3ca; --texto-3: #8b9ca4; --borde: #2a363c; --rejilla: #223035;
+  --barra: #3fb4d8; --barra-suave: #1f4350;
+  --bien-txt: #5fd08a; --aviso-txt: #f2c45a; --mal-txt: #ff8f8f;
+  --bien-fondo: #15301f; --aviso-fondo: #3a2c12; --mal-fondo: #3a1d1d;
+  --ejemplo: #b6a6f0; --ejemplo-fondo: #2a2442; --sombra: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--fondo); color: var(--texto); font-family: var(--f-texto); font-size: 15px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--cabecera); }
+button, input, select { font: inherit; color: inherit; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; border-radius: 6px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Cabecera */
+.cab { background: var(--cabecera); color: #fff; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+.cab-in { display: flex; align-items: center; gap: 14px; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); flex-wrap: wrap; }
+.cab h1 { font-size: 1.1rem; font-weight: 700; }
+.cab .sub { font-size: 0.82rem; opacity: 0.85; }
+.cab .espacio { flex: 1; }
+.chip-maqueta { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: rgb(255 255 255 / 0.18); padding: 3px 9px; border-radius: 999px; }
+.periodo { background: rgb(255 255 255 / 0.16); border: 1px solid rgb(255 255 255 / 0.3); color: #fff; border-radius: 10px; padding: 6px 10px; }
+.periodo option { color: #1b2429; }
+
+/* Estructura */
+.marco { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: calc(100vh - 60px); }
+.nav { border-right: 1px solid var(--borde); background: var(--superficie); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav button { display: flex; align-items: center; gap: 10px; border: 0; background: none; text-align: left; padding: 10px 12px; border-radius: 10px; font-weight: 600; color: var(--texto-2); cursor: pointer; }
+.nav button:hover { background: var(--superficie-2); }
+.nav button[aria-current="page"] { background: var(--marca-suave); color: var(--marca-fuerte); }
+.nav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.nav .cuenta { margin-left: auto; font-size: 0.75rem; background: var(--mal); color: #fff; border-radius: 999px; padding: 0 7px; font-weight: 700; }
+.nav-pie { margin-top: auto; padding: 12px; font-size: 0.78rem; color: var(--texto-3); }
+main { min-width: 0; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.vista { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+.titulo-vista { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.titulo-vista h2 { font-size: 1.45rem; font-weight: 750; letter-spacing: -0.01em; }
+.titulo-vista p { margin: 2px 0 0; color: var(--texto-2); max-width: 70ch; }
+.titulo-vista .espacio { flex: 1; }
+
+.aviso-maqueta { display: flex; gap: 10px; align-items: flex-start; background: var(--ejemplo-fondo); color: var(--texto); border-radius: var(--radio); padding: 10px 14px; font-size: 0.88rem; }
+.aviso-maqueta b { color: var(--ejemplo); }
+
+.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 16px; min-width: 0; }
+.tarjeta h3 { font-size: 1rem; font-weight: 700; }
+.tarjeta .bajada { color: var(--texto-3); font-size: 0.84rem; margin: 2px 0 12px; }
+.rejilla-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.rejilla-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.rejilla-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+
+/* Cifras */
+.cifra { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 14px 16px; display: grid; gap: 2px; }
+.cifra .et { font-size: 0.8rem; color: var(--texto-3); font-weight: 600; }
+.cifra .val { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; }
+.cifra .det { font-size: 0.82rem; color: var(--texto-2); }
+
+/* Etiquetas de estado y de ejemplo */
+.estado { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.estado.bien { background: var(--bien-fondo); color: var(--bien-txt); }
+.estado.aviso { background: var(--aviso-fondo); color: var(--aviso-txt); }
+.estado.mal { background: var(--mal-fondo); color: var(--mal-txt); }
+.estado.neutro { background: var(--superficie-2); color: var(--texto-2); border: 1px solid var(--borde); }
+.ej { display: inline-block; font-size: 0.68rem; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ejemplo); background: var(--ejemplo-fondo); padding: 1px 6px; border-radius: 5px; vertical-align: middle; }
+.est { display: inline-block; font-size: 0.68rem; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; color: var(--aviso-txt); background: var(--aviso-fondo); padding: 1px 6px; border-radius: 5px; vertical-align: middle; }
+
+/* Alertas */
+.alertas { display: grid; gap: 8px; }
+.alerta { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--borde); border-left-width: 4px; border-radius: 10px; background: var(--superficie); }
+.alerta.mal { border-left-color: var(--mal); }
+.alerta.aviso { border-left-color: var(--aviso); }
+.alerta.info { border-left-color: var(--marca); }
+.alerta.ejemplo { border-left-color: var(--ejemplo); }
+.alerta .ico { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; }
+.alerta.mal .ico { background: var(--mal-fondo); color: var(--mal-txt); }
+.alerta.aviso .ico { background: var(--aviso-fondo); color: var(--aviso-txt); }
+.alerta.info .ico { background: var(--marca-suave); color: var(--marca-fuerte); }
+.alerta.ejemplo .ico { background: var(--ejemplo-fondo); color: var(--ejemplo); }
+.alerta b { display: block; }
+.alerta span.t { color: var(--texto-2); font-size: 0.88rem; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; background: var(--marca); color: #fff; border-radius: 10px; padding: 9px 14px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+.btn:hover { background: var(--marca-fuerte); }
+.btn.sec { background: var(--superficie); color: var(--marca-fuerte); border-color: var(--borde); }
+.btn.sec:hover { background: var(--superficie-2); }
+.btn.peq { padding: 6px 10px; font-size: 0.85rem; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:not(.sec) { color: #08232b; } }
+:root[data-theme="dark"] .btn:not(.sec) { color: #08232b; }
+
+/* Barras horizontales */
+.barras { display: grid; gap: 10px; }
+.barra-fila { display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr); gap: 10px; align-items: center; }
+.barra-fila .et { font-size: 0.88rem; color: var(--texto-2); overflow-wrap: anywhere; }
+.barra-pista { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.barra-pista i { display: block; height: 18px; background: var(--barra); border-radius: 0 4px 4px 0; min-width: 3px; }
+.barra-pista span { font-size: 0.85rem; color: var(--texto); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.barra-pista span small { color: var(--texto-3); }
+.barra-fila:hover i, .col:hover i { filter: brightness(1.12); }
+
+/* Columnas por año */
+.columnas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: end; height: 220px; border-bottom: 1px solid var(--rejilla); padding: 0 6px; position: relative; }
+.col { display: grid; justify-items: center; gap: 6px; align-content: end; height: 100%; }
+.col i { display: block; width: 100%; max-width: 64px; background: var(--barra); border-radius: 4px 4px 0 0; }
+.col .v { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.columnas-et { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 6px 6px 0; text-align: center; font-size: 0.85rem; color: var(--texto-2); }
+.columnas-et small { display: block; color: var(--texto-3); }
+
+/* Tablas */
+.tabla-cont { overflow-x: auto; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--rejilla); text-align: left; vertical-align: middle; }
+th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-3); font-weight: 700; background: var(--superficie-2); white-space: nowrap; }
+td.d, th.d { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tbody tr.clic { cursor: pointer; }
+tbody tr.clic:hover td { background: var(--superficie-2); }
+tbody tr[aria-selected="true"] td { background: var(--marca-suave); }
+tr.tachada td { color: var(--texto-3); }
+tr.tachada td.txt { text-decoration: line-through; }
+td .orig { font-family: var(--f-mono); font-size: 0.78rem; color: var(--texto-3); display: block; }
+tfoot td { font-weight: 700; background: var(--superficie-2); }
+
+/* Albarán: foto y líneas */
+.albaran { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 18px; align-items: start; }
+.foto { background: var(--superficie-2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 8px; position: sticky; top: 76px; }
+.foto img { display: block; width: 100%; border-radius: 8px; }
+.foto figcaption { font-size: 0.78rem; color: var(--texto-3); padding: 6px 4px 0; }
+.cuadre { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--superficie-2); font-size: 0.9rem; }
+.mapa { border: 1px solid var(--borde); background: var(--superficie); border-radius: 8px; padding: 4px 6px; max-width: 220px; }
+.acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Calculadora de escandallo */
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.campo { display: grid; gap: 4px; align-content: start; }
+.campo label { font-size: 0.8rem; color: var(--texto-3); font-weight: 650; }
+.campo input[type="number"] { width: 100%; padding: 9px 10px; border: 1px solid var(--borde); border-radius: 10px; background: var(--superficie-2); font-variant-numeric: tabular-nums; }
+.campo input[type="range"] { width: 100%; accent-color: var(--marca); }
+.campo .fila { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.resultado { display: grid; gap: 14px; }
+.grande { font-size: 2.6rem; font-weight: 750; letter-spacing: -0.02em; line-height: 1; }
+.medidor { position: relative; height: 12px; background: var(--barra-suave); border-radius: 999px; overflow: visible; }
+.medidor i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
+.medidor b { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--texto); border-radius: 2px; }
+.medidor-et { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.pares { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.par { background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; }
+.par .et { font-size: 0.78rem; color: var(--texto-3); font-weight: 650; }
+.par .val { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sensibilidad { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.sensibilidad div { text-align: center; padding: 8px 4px; border-radius: 8px; background: var(--superficie-2); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.sensibilidad div.actual { outline: 2px solid var(--marca); }
+.sensibilidad small { display: block; color: var(--texto-3); }
+.nota-falta { font-size: 0.85rem; color: var(--aviso-txt); background: var(--aviso-fondo); border-radius: 10px; padding: 8px 12px; }
+
+/* Precios */
+.filtros { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.filtros button { border: 1px solid var(--borde); background: var(--superficie); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+.filtros button[aria-pressed="true"] { background: var(--marca); border-color: var(--marca); color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .filtros button[aria-pressed="true"] { color: #08232b; } }
+:root[data-theme="dark"] .filtros button[aria-pressed="true"] { color: #08232b; }
+.buscar { padding: 8px 12px; border: 1px solid var(--borde); border-radius: 999px; background: var(--superficie); min-width: 0; width: 240px; max-width: 100%; }
+svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
+
+/* Modal de subida */
+.velo { position: fixed; inset: 0; background: rgb(0 0 0 / 0.45); display: grid; place-items: center; padding: 16px; z-index: 50; }
+.modal { background: var(--superficie); border-radius: 16px; width: 100%; max-width: 560px; padding: 20px; display: grid; gap: 14px; box-shadow: 0 10px 40px rgb(0 0 0 / 0.3); }
+.soltar { border: 2px dashed var(--borde); border-radius: 12px; padding: 24px; text-align: center; color: var(--texto-2); }
+.soltar input { margin-top: 10px; max-width: 100%; }
+.pasos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; font-size: 0.8rem; }
+.pasos div { padding: 8px; border-radius: 8px; background: var(--superficie-2); text-align: center; color: var(--texto-2); }
+.pasos div.hecho { background: var(--marca-suave); color: var(--marca-fuerte); font-weight: 700; }
+.vista-previa img { max-height: 260px; margin: 0 auto; display: block; border-radius: 8px; }
+
+/* Tooltip */
+.tip { position: fixed; pointer-events: none; z-index: 60; background: var(--texto); color: var(--fondo); font-size: 0.8rem; padding: 6px 9px; border-radius: 8px; max-width: 240px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 980px) {
+  .rejilla-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rejilla-3 { grid-template-columns: minmax(0, 1fr); }
+  .calc, .albaran { grid-template-columns: minmax(0, 1fr); }
+  .foto { position: static; }
+}
+@media (max-width: 760px) {
+  .marco { grid-template-columns: minmax(0, 1fr); }
+  .nav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--borde); padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .nav button { flex: none; padding: 8px 12px; }
+  .nav-pie { display: none; }
+  .rejilla-2 { grid-template-columns: minmax(0, 1fr); }
+  .campos, .pares { grid-template-columns: minmax(0, 1fr); }
+  .sensibilidad { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grande { font-size: 2.1rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .barra-pista i, .col i, .medidor i { transition: width 0.25s ease, height 0.25s ease; }
+}
+</style>
+</head>
+<body>
+<header class="cab">
+  <div class="cab-in">
+    <div>
+      <h1>Gestión · Morelia</h1>
+      <div class="sub">Pizza Pija S.L. · Plaça Comercial 7</div>
+    </div>
+    <span class="chip-maqueta">Maqueta</span>
+    <span class="espacio"></span>
+    <label class="sr" for="periodo" hidden>Periodo</label>
+    <select id="periodo" class="periodo" aria-label="Periodo">
+      <option>Semana del 17 al 22 oct 2026</option>
+      <option>Octubre 2026</option>
+      <option>Últimos 3 meses</option>
+    </select>
+  </div>
+</header>
+
+<div class="marco">
+  <nav class="nav" aria-label="Secciones">
+    <button data-vista="resumen"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4h6v4h-6zM4 20h6v-3H4z"/></svg>Resumen</button>
+    <button data-vista="albaranes"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>Albaranes<span class="cuenta" id="cuenta-albaranes">3</span></button>
+    <button data-vista="precios"><svg viewBox="0 0 24 24"><path d="M3 12l9-9h7v7l-9 9z"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>Precios</button>
+    <button data-vista="escandallos"><svg viewBox="0 0 24 24"><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6M9 11h6"/></svg>Escandallos</button>
+    <button data-vista="ventas"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Ventas</button>
+    <div class="nav-pie">Maqueta. En la versión real se entrará con usuario y contraseña, y solo la dueña.</div>
+  </nav>
+
+  <main>
+    <!-- RESUMEN -->
+    <section class="vista" id="v-resumen" hidden>
+      <div class="titulo-vista">
+        <div>
+          <h2>Resumen</h2>
+          <p>Lo gastado en los albaranes subidos, lo que hay que revisar y cómo está el coste de los platos.</p>
+        </div>
+      </div>
+      <div class="aviso-maqueta"><span>ⓘ</span><span>Las cifras salen de los <b>5 albaranes reales</b> que mandaste (17–22 oct 2026). Lo marcado <span class="ej">Ejemplo</span> es inventado para enseñar la pantalla, y lo marcado <span class="est">Estimado</span> sale del Excel del TPV.</span></div>
+      <div class="rejilla-4" id="cifras-resumen"></div>
+      <div class="tarjeta">
+        <h3>Para revisar</h3>
+        <p class="bajada">Lo que la herramienta detecta sola al leer cada albarán.</p>
+        <div class="alertas" id="alertas"></div>
+      </div>
+      <div class="rejilla-2">
+        <div class="tarjeta">
+          <h3>Gasto por tipo de producto</h3>
+          <p class="bajada">Base imponible, sin IVA. El IVA se recupera, así que no cuenta como coste.</p>
+          <div class="barras" id="g-categoria"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Gasto por proveedor</h3>
+          <p class="bajada">Base imponible, sin IVA · <span id="nota-incompletos"></span></p>
+          <div class="barras" id="g-proveedor"></div>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h3>Coste de los platos de carne</h3>
+        <p class="bajada">% del precio de venta sin IVA que se va en la carne. Objetivo: <b id="obj-resumen">30 %</b>.</p>
+        <div class="tabla-cont"><table><thead><tr><th>Plato</th><th class="d">Coste ración</th><th class="d">Precio carta</th><th class="d">% coste</th><th>Estado</th></tr></thead><tbody id="t-resumen-platos"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ALBARANES -->
+    <section class="vista" id="v-albaranes" hidden>
+      <div class="titulo-vista">
+        <div>
+          <h2>Albaranes</h2>
+          <p>Se sube la foto, se leen las líneas solas y aquí se revisan antes de darlas por buenas.</p>
+        </div>
+        <span class="espacio"></span>
+        <button class="btn" data-accion="subir">＋ Subir albarán</button>
+      </div>
+      <div class="tabla-cont">
+        <table>
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th>Número</th><th class="d">Líneas</th><th class="d">Base</th><th class="d">Total</th><th>Estado</th></tr></thead>
+          <tbody id="t-albaranes"></tbody>
+        </table>
+      </div>
+      <div class="tarjeta" id="detalle-albaran"></div>
+    </section>
+
+    <!-- PRECIOS -->
+    <section class="vista" id="v-precios" hidden>
+      <div class="titulo-vista">
+        <div>
+          <h2>Precios de compra</h2>
+          <p>El último precio de cada ingrediente, sacado de los albaranes. Con el segundo albarán de un producto aparece cuánto ha subido.</p>
+        </div>
+      </div>
+      <div class="filtros" id="filtros-precios"></div>
+      <div class="rejilla-2" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);" id="precios-cuerpo">
+        <div class="tabla-cont"><table>
+          <thead><tr><th>Ingrediente</th><th>Proveedor</th><th class="d">Precio</th><th class="d">Cambio</th></tr></thead>
+          <tbody id="t-precios"></tbody>
+        </table></div>
+        <div class="tarjeta" id="detalle-precio"></div>
+      </div>
+    </section>
+
+    <!-- ESCANDALLOS -->
+    <section class="vista" id="v-escandallos" hidden>
+      <div class="titulo-vista">
+        <div>
+          <h2>Escandallos</h2>
+          <p>Cuánto cuesta servir cada plato y si su precio de carta llega al objetivo. En la carne manda el rendimiento: lo que queda después de limpiar la pieza.</p>
+        </div>
+        <span class="espacio"></span>
+        <div class="campo" style="min-width:160px">
+          <label for="objetivo">Objetivo de coste</label>
+          <input type="number" id="objetivo" min="15" max="50" step="1" value="30">
+        </div>
+      </div>
+      <div class="tabla-cont"><table>
+        <thead><tr><th>Plato</th><th>Ingrediente principal</th><th class="d">Compra</th><th class="d">Rendim.</th><th class="d">Coste ración</th><th class="d">Precio carta</th><th class="d">% coste</th><th>Estado</th></tr></thead>
+        <tbody id="t-platos"></tbody>
+      </table></div>
+      <div class="tarjeta" id="calculadora"></div>
+    </section>
+
+    <!-- VENTAS -->
+    <section class="vista" id="v-ventas" hidden>
+      <div class="titulo-vista">
+        <div>
+          <h2>Ventas</h2>
+          <p>Del listado del TPV que mandaste: solo la franja de las 23:00 al cierre, de 2023 a 2025. Las cantidades son reales; los importes de ese archivo son estimados y no se usan.</p>
+        </div>
+      </div>
+      <div class="rejilla-4" id="cifras-ventas"></div>
+      <div class="rejilla-2">
+        <div class="tarjeta">
+          <h3>Unidades vendidas después de las 23:00</h3>
+          <p class="bajada">Todos los productos, por año. 2022 solo tiene datos desde octubre y queda fuera.</p>
+          <div class="columnas" id="g-anios"></div>
+          <div class="columnas-et" id="g-anios-et"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Lo que deja cada plato con escandallo</h3>
+          <p class="bajada">Margen por ración × raciones vendidas en 2025 (franja nocturna). Cambia si tocas los datos del escandallo.</p>
+          <div class="barras" id="g-margen"></div>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h3>Platos principales: raciones vendidas por año</h3>
+        <p class="bajada">Franja de las 23:00 al cierre.</p>
+        <div class="tabla-cont"><table>
+          <thead><tr><th>Plato</th><th class="d">2023</th><th class="d">2024</th><th class="d">2025</th><th class="d">2025 vs 2023</th></tr></thead>
+          <tbody id="t-ventas"></tbody>
+        </table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+// ---------- Datos reales de los albaranes (17–22 oct 2026) ----------
+const ALBARANES = [
+  { id: 'cocacola', proveedor: 'Coca-Cola Europacific', categoria: 'Bebidas', numero: '4538208589', fecha: '2026-10-22', img: 'assets/maqueta/cocacola.jpg', paginas: 'Página 1 de 2',
+    base: 146.29, iva: null, total: null, estado: 'incidencia', estadoTxt: 'Incidencia',
+    notas: ['La página 2, con el IVA y el total, no está subida.', 'Incluye Punto Verde (0,33 €) e impuesto de bebidas azucaradas (1,71 €).'],
+    lineas: [
+      { orig: 'SPRITE VR20 C24', ing: 'Sprite 20 cl', cant: 24, ud: 'ud', precio: 0.593, imp: 14.24 },
+      { orig: 'COCACOLA VR237 C24', ing: 'Coca-Cola 23,7 cl', cant: 48, ud: 'ud', precio: 0.748, imp: 35.92 },
+      { orig: 'COCACOLA ZER VR237 C24', ing: 'Coca-Cola Zero 23,7 cl', cant: 48, ud: 'ud', precio: 0.713, imp: 34.21 },
+      { orig: 'FANTA NAR VR237 C24', ing: 'Fanta naranja 23,7 cl', cant: 24, ud: 'ud', precio: 0.713, imp: 17.10, noCargado: true },
+      { orig: 'AQUARIUS VR30 C24', ing: 'Aquarius 30 cl', cant: 24, ud: 'ud', precio: 0.720, imp: 17.29 },
+      { orig: 'AQUABONA VR50 C20', ing: 'Agua Aquabona 50 cl', cant: 60, ud: 'ud', precio: 0.305, imp: 18.30 },
+      { orig: 'FANTA LIM PET2L C6', ing: 'Fanta limón 2 L', cant: 6, ud: 'ud', precio: 1.538, imp: 9.23 },
+    ] },
+  { id: 'disbesa', proveedor: 'Disbesa (Emcadi)', categoria: 'Bebidas', numero: '315029', fecha: '2026-10-22', img: 'assets/maqueta/disbesa.jpg', paginas: 'Página 1 de 1',
+    base: 343.34, iva: 72.10, total: 415.44, estado: 'pendiente', estadoTxt: 'Por revisar', nuevo: true,
+    notas: ['Proveedor que no está en el catálogo del stock.', 'Pago al contado.'],
+    lineas: [
+      { orig: 'Corona 1/3 Sr P6 x4', ing: 'Corona 33 cl (caja 24)', cant: 1, ud: 'caja', precio: 22.08, imp: 22.08 },
+      { orig: 'Alhambra Reserva 1925 30cl Ret. x24', ing: 'Alhambra 1925 30 cl (caja 24)', cant: 1, ud: 'caja', precio: 28.631, imp: 28.631 },
+      { orig: 'San Miguel Barril 30L', ing: 'Barril San Miguel 30 L', cant: 2, ud: 'barril', precio: 99.647, imp: 199.294 },
+      { orig: 'Stella Artois Barril 30L', ing: 'Barril Stella Artois 30 L', cant: 1, ud: 'barril', precio: 89.431, imp: 89.431 },
+      { orig: 'Desplazamiento y Servicio', ing: 'Portes', cant: 1, ud: 'servicio', precio: 3.90, imp: 3.90 },
+    ] },
+  { id: 'escofet', proveedor: 'Escofet Oliver', categoria: 'Carne', numero: '28638', fecha: '2026-10-22', img: 'assets/maqueta/escofet.jpg', paginas: 'Página 1 de 1',
+    base: 232.16, iva: 23.22, total: 255.38, estado: 'pendiente', estadoTxt: 'Por revisar', nuevo: true,
+    notas: ['Albarán en catalán: la lectura traduce los nombres.', 'Proveedor que no está en el catálogo del stock.'],
+    lineas: [
+      { orig: 'XURRASCO DAVANT VEDE', ing: 'Churrasco de ternera', cant: 4.195, ud: 'kg', precio: 11.65, imp: 48.87 },
+      { orig: 'CARN PICADA VACA', ing: 'Carne picada de vaca', cant: 10.355, ud: 'kg', precio: 12.50, imp: 129.44 },
+      { orig: 'RODO CUIXA VEDELLA', ing: 'Redondo de ternera', cant: 4.45, ud: 'kg', precio: 12.10, imp: 53.85 },
+    ] },
+  { id: 'eurocampa', proveedor: 'Eurocampa', categoria: 'Carne', numero: '31268', fecha: '2026-10-21', img: 'assets/maqueta/eurocampa.jpg', paginas: 'Página 1 de 1',
+    base: 184.26, iva: 17.23, total: 201.49, estado: 'revisado', estadoTxt: 'Revisado',
+    notas: ['Vence el 28/10/2026 · pago por transferencia.', 'El flete (12,00 €) va sin IVA.'],
+    lineas: [
+      { orig: 'Bife Alto - AR - Recreo 2,8+', ing: 'Lomo alto argentino (bife alto)', cant: 3.12, ud: 'kg', precio: 29.90, imp: 93.29 },
+      { orig: 'Solomillo 4/5 - AR - RECREO', ing: 'Solomillo de ternera argentino', cant: 2.03, ud: 'kg', precio: 38.90, imp: 78.97 },
+      { orig: 'Flete', ing: 'Portes', cant: 1, ud: 'servicio', precio: 12.00, imp: 12.00 },
+    ] },
+  { id: 'proman', proveedor: 'Proman Fruits', categoria: 'Fruta y verdura', numero: 'AL-2026-012341', fecha: '2026-10-17', img: 'assets/maqueta/proman.jpg', paginas: 'Página 1 de 2',
+    base: 150.85, iva: 6.41, total: null, estado: 'incompleto', estadoTxt: 'Falta página 2', nuevo: true,
+    notas: ['Falta la página 2: el total no se puede comprobar.', 'IVA mezclado: 4 % la fruta y verdura, 10 % las hierbas y el germinado.'],
+    lineas: [
+      ['AGUACATE EXTRA', 'Aguacate', 2.1, 'kg', 7.99, 16.78], ['CEBOLLA MORADA', 'Cebolla morada', 1.1, 'kg', 2.55, 2.81],
+      ['BERENJENA EXTRA', 'Berenjena', 0.7, 'kg', 2.45, 1.72], ['BONIATO', 'Boniato', 1.28, 'kg', 1.99, 2.55],
+      ['CALABACIN EXTRA', 'Calabacín', 2.16, 'kg', 2.55, 5.51], ['CEBOLLA GORDA', 'Cebolla', 8.5, 'kg', 1.65, 14.03],
+      ['GERMINADO DE ALFALFA', 'Germinado de alfalfa', 1, 'ud', 1.79, 1.79], ['MEZCLUM 350 GRS', 'Mezclum 350 g', 4, 'ud', 2.75, 11.00],
+      ['PIMIENTO ROJO EXTRA', 'Pimiento rojo', 1.9, 'kg', 4.99, 9.48], ['PIMIENTO VERDE LAMUYO EXTRA', 'Pimiento verde lamuyo', 1.6, 'kg', 4.99, 7.98],
+      ['RUCULA 100grs', 'Rúcula 100 g', 3, 'ud', 1.79, 5.37], ['TOMATE MADURO', 'Tomate maduro', 1.1, 'kg', 2.99, 3.29],
+      ['PATATA AGRIA KG', 'Patata agria', 6.1, 'kg', 1.55, 9.46], ['PIMIENTO PADRON', 'Pimiento de Padrón', 2, 'kg', 7.99, 15.98],
+      ['TOMATE KUMATO KG', 'Tomate kumato', 1.1, 'kg', 6.99, 7.69], ['LIMA KG', 'Lima', 1.1, 'kg', 6.55, 7.21],
+      ['LIMON IMPORTACION', 'Limón', 2, 'kg', 2.35, 4.70], ['MANZANA GOLDEN EXTRA', 'Manzana golden', 1.15, 'kg', 2.99, 3.44],
+      ['FRESA IMPORTACION', 'Fresa', 0.2, 'kg', 11.99, 2.40], ['NARANJA EXTRA MESA', 'Naranja de mesa', 1.26, 'kg', 3.99, 5.03],
+      ['PERA LIMONERA KG', 'Pera limonera', 2, 'kg', 2.55, 5.10], ['MANOJO DE APIO', 'Apio', 1, 'manojo', 1.99, 1.99],
+      ['PUERRO', 'Puerro', 0.3, 'kg', 3.55, 1.07], ['ALBAHACA MANOJO', 'Albahaca', 1, 'manojo', 1.99, 1.99],
+      ['PEREJIL', 'Perejil', 1, 'manojo', 0.99, 0.99], ['MANOJO DE ROMERO', 'Romero', 1, 'manojo', 1.49, 1.49],
+    ].map(([orig, ing, cant, ud, precio, imp]) => ({ orig, ing, cant, ud, precio, imp })) },
+];
+
+// Historial de ejemplo para enseñar cómo se ve una subida de precio.
+const HISTORIAL_EJEMPLO = {
+  'Lomo alto argentino (bife alto)': [['2026-06-16', 27.50], ['2026-07-14', 27.50], ['2026-08-18', 28.20], ['2026-09-22', 28.50], ['2026-10-21', 29.90]],
+};
+
+// Platos: precio de carta estimado = precio del Excel de 2025 ÷ 0,95 (supuesto del propio archivo).
+const PLATOS = [
+  { id: 'entrecot250', nombre: 'Entrecot 250 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 250, pvp: 28.95, v2025: 43 },
+  { id: 'entrecot350', nombre: 'Entrecot 350 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 350, pvp: 38.95, v2025: 18 },
+  { id: 'solomillo', nombre: 'Solomillo de ternera', ing: 'Solomillo de ternera argentino', prov: 'Eurocampa', precioKg: 38.90, rend: 80, gramos: 250, pvp: 36.00, v2025: 25 },
+  { id: 'milanesa', nombre: 'Milanesa napolitana', ing: 'Redondo de ternera', prov: 'Escofet Oliver', precioKg: 12.10, rend: 85, gramos: 200, pvp: 16.95, v2025: 110, falta: 'pan rallado, huevo, tomate, mozzarella y jamón', gramosEj: true },
+  { id: 'burger', nombre: 'Burger bacon & cheddar', ing: 'Carne picada de vaca', prov: 'Escofet Oliver', precioKg: 12.50, rend: 100, gramos: 180, pvp: 16.95, v2025: 118, falta: 'pan, bacon y cheddar', gramosEj: true },
+  { id: 'entrana', nombre: 'Entraña', ing: 'Entraña', prov: 'Rubén Viñas', precioKg: null, rend: 85, gramos: 250, pvp: 18.00, v2025: 90 },
+  { id: 'vacio', nombre: 'Vacío', ing: 'Vacío', prov: null, precioKg: null, rend: 85, gramos: 250, pvp: 18.00, v2025: 49 },
+  { id: 'mollejas', nombre: 'Mollejas de ternera', ing: 'Mollejas de ternera', prov: 'Eduardo', precioKg: null, rend: 85, gramos: 250, pvp: 16.95, v2025: 18 },
+];
+
+// Ventas reales del listado nocturno (unidades por año).
+const VENTAS_ANIO = [
+  { anio: '2023', uds: 18774, noches: 215 },
+  { anio: '2024', uds: 12464, noches: 171 },
+  { anio: '2025', uds: 7462, noches: 144 },
+];
+const VENTAS_PLATOS = [
+  ['Burger bacon & cheddar', 369, 286, 118], ['Entraña', 165, 164, 90], ['Milanesa napolitana', 178, 137, 110],
+  ['Muslo de pollo', 98, 159, 84], ['Costillas de cerdo (ribs)', 152, 106, 56], ['Vacío', 90, 100, 49],
+  ['Solomillo de cerdo', 105, 88, 41], ['Entrecot 250 g', 72, 53, 43], ['Parrillada x2', 63, 65, 42],
+  ['Rulo de pollo', 129, 85, 39], ['Menú parrillada', 166, 71, 25], ['Solomillo de ternera', 94, 47, 25],
+  ['Entrecot 350 g', 20, 12, 18], ['Mollejas de ternera', 28, 31, 18],
+];
+
+// ---------- Utilidades ----------
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (n, d = 2) => n.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const eur = (n, d = 2) => `${num(n, d)} €`;
+const pct = (n, d = 0) => `${num(n * 100, d)} %`;
+const fecha = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+const cant = (n) => num(n, Number.isInteger(n) ? 0 : n < 1 ? 2 : (String(n).split('.')[1] || '').length > 2 ? 3 : 2);
+let objetivo = 0.30;
+let albaranSel = 'cocacola';
+let platoSel = 'entrecot250';
+let catPrecios = 'Todas';
+let ingSel = 'Lomo alto argentino (bife alto)';
+let busqueda = '';
+
+function calcular(p) {
+  if (!p.precioKg) return null;
+  const coste = (p.gramos / 1000) / (p.rend / 100) * p.precioKg;
+  const pvpSin = p.pvp / 1.10;
+  const porcentaje = coste / pvpSin;
+  const sugerido = Math.ceil(((coste / objetivo) * 1.10) * 2) / 2;
+  return { coste, pvpSin, porcentaje, margen: pvpSin - coste, sugerido, raciones: (1000 * p.rend / 100) / p.gramos };
+}
+
+function estadoCoste(porcentaje, incompleto) {
+  if (porcentaje == null) return '<span class="estado neutro">Falta precio de compra</span>';
+  if (incompleto) return '<span class="estado neutro">Incompleto</span>';
+  if (porcentaje <= objetivo) return '<span class="estado bien">En objetivo</span>';
+  if (porcentaje <= objetivo + 0.05) return '<span class="estado aviso">Algo alto</span>';
+  return '<span class="estado mal">Alto</span>';
+}
+
+function barras(cont, datos, total) {
+  const max = Math.max(...datos.map((d) => d.valor));
+  cont.innerHTML = datos.map((d) => `
+    <div class="barra-fila" data-tip="${esc(d.etiqueta)} · ${eur(d.valor)}${total ? ` · ${pct(d.valor / total)} del total` : ''}${d.extra ? ` · ${esc(d.extra)}` : ''}">
+      <span class="et">${esc(d.etiqueta)}${d.marca ? ` <span class="${d.marca === 'ej' ? 'ej' : 'est'}">${d.marca === 'ej' ? 'Ejemplo' : 'Incompleto'}</span>` : ''}</span>
+      <span class="barra-pista"><i style="width:${(d.valor / max) * 78}%"></i><span>${eur(d.valor, 0)}${total ? ` <small>${pct(d.valor / total)}</small>` : ''}</span></span>
+    </div>`).join('');
+}
+
+// ---------- Resumen ----------
+function pintarResumen() {
+  const base = ALBARANES.reduce((s, a) => s + a.base, 0);
+  const incompletos = ALBARANES.filter((a) => a.total == null);
+  const porRevisar = ALBARANES.filter((a) => a.estado !== 'revisado').length;
+  const conPrecio = PLATOS.filter((p) => p.precioKg && !p.falta).map((p) => ({ p, c: calcular(p) }));
+  const altos = conPrecio.filter(({ c }) => c.porcentaje > objetivo).length;
+  $('#cifras-resumen').innerHTML = `
+    <div class="cifra"><span class="et">Gastado (sin IVA)</span><span class="val">${eur(base)}</span><span class="det">5 albaranes · 17–22 oct</span></div>
+    <div class="cifra"><span class="et">Albaranes por revisar</span><span class="val">${porRevisar}</span><span class="det">${incompletos.length} con páginas que faltan</span></div>
+    <div class="cifra"><span class="et">Posible reclamación</span><span class="val">${eur(17.10 * 1.10)}</span><span class="det">Fanta naranja no entregada, con IVA</span></div>
+    <div class="cifra"><span class="et">Platos por encima del objetivo</span><span class="val">${altos} de ${conPrecio.length}</span><span class="det">con escandallo completo</span></div>`;
+
+  $('#alertas').innerHTML = [
+    { tipo: 'mal', ico: '!', titulo: 'Coca-Cola cobra algo que no llegó', texto: 'La Fanta naranja está anotada a mano "No cargado", pero sus 17,10 € (+ IVA) siguen sumados en el albarán 4538208589.', boton: 'Ver albarán', ir: 'cocacola' },
+    { tipo: 'aviso', ico: '2', titulo: 'Faltan páginas', texto: 'Proman Fruits y Coca-Cola subieron solo la página 1 de 2: sin la segunda no se comprueba el total.', boton: 'Ver albarán', ir: 'proman' },
+    { tipo: 'info', ico: '+', titulo: 'Proveedores nuevos', texto: 'Escofet Oliver, Proman Fruits, Coca-Cola y Disbesa no están en el catálogo del stock.', boton: 'Añadir al stock' },
+    { tipo: 'ejemplo', ico: '↑', titulo: 'El bife alto sube un 4,9 %', texto: 'Pasa de 28,50 a 29,90 €/kg: el entrecot de 250 g gana un punto de coste.', boton: 'Ver precio', ir: 'precio', ej: true },
+  ].map((a) => `
+    <div class="alerta ${a.tipo}">
+      <span class="ico" aria-hidden="true">${a.ico}</span>
+      <span><b>${esc(a.titulo)}${a.ej ? ' <span class="ej">Ejemplo</span>' : ''}</b><span class="t">${esc(a.texto)}</span></span>
+      <button class="btn sec peq" data-ir="${a.ir || ''}">${esc(a.boton)}</button>
+    </div>`).join('');
+
+  const cats = {};
+  const provs = {};
+  for (const a of ALBARANES) {
+    cats[a.categoria] = (cats[a.categoria] || 0) + a.base;
+    provs[a.proveedor] = { valor: a.base, incompleto: a.total == null };
+  }
+  barras($('#g-categoria'), Object.entries(cats).map(([etiqueta, valor]) => ({ etiqueta, valor })).sort((a, b) => b.valor - a.valor), base);
+  barras($('#g-proveedor'), Object.entries(provs).map(([etiqueta, d]) => ({ etiqueta, valor: d.valor, marca: d.incompleto ? 'inc' : null, extra: d.incompleto ? 'falta la página 2' : '' })).sort((a, b) => b.valor - a.valor), base);
+  $('#nota-incompletos').textContent = 'los marcados no tienen todas sus páginas';
+  $('#obj-resumen').textContent = pct(objetivo);
+  $('#t-resumen-platos').innerHTML = PLATOS.slice(0, 5).map((p) => {
+    const c = calcular(p);
+    return `<tr class="clic" data-plato="${p.id}"><td>${esc(p.nombre)}</td><td class="d">${p.falta ? '≥ ' : ''}${eur(c.coste)}</td><td class="d">${eur(p.pvp)} <span class="est">Estimado</span></td><td class="d">${p.falta ? '≥ ' : ''}${pct(c.porcentaje)}</td><td>${estadoCoste(c.porcentaje, !!p.falta)}</td></tr>`;
+  }).join('');
+}
+
+// ---------- Albaranes ----------
+function pintarAlbaranes() {
+  $('#t-albaranes').innerHTML = ALBARANES.map((a) => {
+    const clase = { revisado: 'bien', pendiente: 'neutro', incompleto: 'aviso', incidencia: 'mal' }[a.estado];
+    return `<tr class="clic" data-albaran="${a.id}" aria-selected="${a.id === albaranSel}">
+      <td class="num">${fecha(a.fecha)}</td><td><b>${esc(a.proveedor)}</b>${a.nuevo ? ' <span class="estado neutro">Nuevo</span>' : ''}</td>
+      <td class="num">${esc(a.numero)}</td><td class="d">${a.lineas.length}</td><td class="d">${eur(a.base)}</td>
+      <td class="d">${a.total != null ? eur(a.total) : '—'}</td><td><span class="estado ${clase}">${esc(a.estadoTxt)}</span></td></tr>`;
+  }).join('');
+  const a = ALBARANES.find((x) => x.id === albaranSel);
+  // En Coca-Cola el neto de cada línea ya lleva el Punto Verde y el impuesto: la suma es la base.
+  const sumaLineas = a.lineas.reduce((s, l) => s + l.imp, 0);
+  const cuadra = Math.abs(sumaLineas - a.base) < 0.02;
+  const noCargado = a.lineas.filter((l) => l.noCargado);
+  $('#detalle-albaran').innerHTML = `
+    <div class="titulo-vista" style="margin-bottom:12px">
+      <div><h3 style="font-size:1.15rem">${esc(a.proveedor)} · ${esc(a.numero)}</h3>
+        <p class="bajada" style="margin:2px 0 0">${fecha(a.fecha)} · ${esc(a.paginas)} · ${esc(a.categoria)}</p></div>
+      <span class="espacio"></span>
+      <div class="acciones">
+        ${noCargado.length ? '<button class="btn sec" data-accion="reclamar">Preparar reclamación</button>' : ''}
+        <button class="btn" data-accion="confirmar">${a.estado === 'revisado' ? '✓ Revisado' : 'Dar por bueno'}</button>
+      </div>
+    </div>
+    <div class="albaran">
+      <figure class="foto" style="margin:0">
+        <img src="${a.img}" alt="Foto del albarán ${esc(a.numero)} de ${esc(a.proveedor)}">
+        <figcaption>La foto solo se usa para revisar; lo que se guarda son las líneas.</figcaption>
+      </figure>
+      <div style="display:grid;gap:12px;min-width:0">
+        ${a.notas.map((n) => `<div class="cuadre">ⓘ ${esc(n)}</div>`).join('')}
+        ${noCargado.length ? `<div class="alerta mal"><span class="ico">!</span><span><b>Línea cobrada sin entregar</b><span class="t">${esc(noCargado[0].ing)}: anotado "No cargado" en el papel, pero suma ${eur(noCargado[0].imp)} al albarán.</span></span><span></span></div>` : ''}
+        <div class="tabla-cont"><table>
+          <thead><tr><th>En el albarán → ingrediente</th><th class="d">Cantidad</th><th class="d">Precio</th><th class="d">Importe</th><th></th></tr></thead>
+          <tbody>${a.lineas.map((l) => `
+            <tr class="${l.noCargado ? 'tachada' : ''}">
+              <td class="txt"><span class="orig">${esc(l.orig)}</span>${esc(l.ing)}${a.nuevo && l.ing !== 'Portes' ? ' <span class="estado neutro" title="Primera vez que aparece: se confirma una sola vez">nuevo</span>' : ''}</td>
+              <td class="d">${cant(l.cant)} ${esc(l.ud)}</td><td class="d">${num(l.precio, l.precio < 1 ? 3 : 2)} €</td><td class="d">${eur(l.imp)}</td>
+              <td>${l.noCargado ? '<span class="estado mal">No cargado</span>' : '<span class="estado bien">OK</span>'}</td>
+            </tr>`).join('')}</tbody>
+          <tfoot><tr><td>Suma de líneas</td><td></td><td></td><td class="d">${eur(sumaLineas)}</td><td></td></tr></tfoot>
+        </table></div>
+        <div class="cuadre">
+          ${cuadra ? '<span class="estado bien">Cuadra</span>' : '<span class="estado aviso">No cuadra</span>'}
+          <span>Base del albarán <b class="num">${eur(a.base)}</b>${a.iva != null ? ` · IVA <b class="num">${eur(a.iva)}</b>` : ''} · Total <b class="num">${a.total != null ? eur(a.total) : 'en la página 2'}</b></span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function abrirSubida() {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `
+    <div class="modal" role="dialog" aria-label="Subir albarán">
+      <h3 style="font-size:1.15rem">Subir albarán</h3>
+      <div class="pasos"><div class="hecho">1 · Foto</div><div>2 · Lectura</div><div>3 · Revisión</div><div>4 · Guardado</div></div>
+      <div class="soltar">Haz una foto al albarán o elige el archivo (foto o PDF). Si tiene varias páginas, súbelas juntas.<br>
+        <input type="file" id="archivo" accept="image/*,application/pdf" multiple></div>
+      <div class="vista-previa" id="previa"></div>
+      <p class="bajada" style="margin:0">En la maqueta no se lee nada: en la versión real, a los pocos segundos aparecen las líneas para revisarlas como en los albaranes de la lista.</p>
+      <div class="acciones" style="justify-content:flex-end"><button class="btn sec" data-cerrar>Cerrar</button></div>
+    </div>`;
+  velo.addEventListener('click', (ev) => { if (ev.target === velo || ev.target.closest('[data-cerrar]')) velo.remove(); });
+  velo.querySelector('#archivo').addEventListener('change', (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    velo.querySelectorAll('.pasos div')[1].classList.add('hecho');
+    const previa = velo.querySelector('#previa');
+    if (f.type.startsWith('image/')) {
+      const r = new FileReader();
+      r.onload = () => { previa.innerHTML = `<img src="${r.result}" alt="Vista previa del albarán">`; };
+      r.readAsDataURL(f);
+    } else {
+      previa.innerHTML = `<p class="cuadre">${esc(f.name)}</p>`;
+    }
+  });
+  document.body.append(velo);
+}
+
+// ---------- Precios ----------
+function todosLosPrecios() {
+  const lista = [];
+  for (const a of ALBARANES) {
+    for (const l of a.lineas) {
+      if (l.ing === 'Portes' || l.noCargado) continue;
+      lista.push({ ing: l.ing, prov: a.proveedor, cat: a.categoria, precio: l.precio, ud: l.ud, fecha: a.fecha });
+    }
+  }
+  return lista.sort((x, y) => x.cat.localeCompare(y.cat) || x.ing.localeCompare(y.ing));
+}
+
+function pintarPrecios() {
+  const cats = ['Todas', 'Carne', 'Fruta y verdura', 'Bebidas'];
+  $('#filtros-precios').innerHTML = cats.map((c) => `<button data-cat="${c}" aria-pressed="${c === catPrecios}">${c}</button>`).join('')
+    + `<span style="flex:1"></span><input class="buscar" id="buscar" placeholder="Buscar ingrediente" value="${esc(busqueda)}" aria-label="Buscar ingrediente">`;
+  const q = busqueda.trim().toLowerCase();
+  const filas = todosLosPrecios().filter((p) => (catPrecios === 'Todas' || p.cat === catPrecios) && (!q || p.ing.toLowerCase().includes(q)));
+  $('#t-precios').innerHTML = filas.map((p) => {
+    const h = HISTORIAL_EJEMPLO[p.ing];
+    const cambio = h ? (h.at(-1)[1] / h.at(-2)[1] - 1) : null;
+    return `<tr class="clic" data-ing="${esc(p.ing)}" aria-selected="${p.ing === ingSel}">
+      <td>${esc(p.ing)}</td><td>${esc(p.prov)}</td>
+      <td class="d">${num(p.precio, p.precio < 1 ? 3 : 2)} €/${esc(p.ud)}</td>
+      <td class="d">${cambio != null ? `<span class="estado aviso">+${num(cambio * 100, 1)} %</span> <span class="ej">Ejemplo</span>` : '<span style="color:var(--texto-3)">Primer precio</span>'}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--texto-3)">Ningún ingrediente con ese nombre.</td></tr>';
+  pintarDetallePrecio();
+}
+
+function pintarDetallePrecio() {
+  const p = todosLosPrecios().find((x) => x.ing === ingSel);
+  if (!p) { $('#detalle-precio').innerHTML = '<p class="bajada">Elige un ingrediente.</p>'; return; }
+  const h = HISTORIAL_EJEMPLO[p.ing];
+  const usado = PLATOS.filter((pl) => pl.ing === p.ing);
+  let grafico;
+  if (h) {
+    const ancho = 320, alto = 120, m = { l: 8, r: 46, t: 14, b: 22 };
+    const ys = h.map((x) => x[1]);
+    const min = Math.floor(Math.min(...ys) - 0.5), max = Math.ceil(Math.max(...ys) + 0.5);
+    const X = (i) => m.l + (i * (ancho - m.l - m.r)) / (h.length - 1);
+    const Y = (v) => m.t + (1 - (v - min) / (max - min)) * (alto - m.t - m.b);
+    const linea = h.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(' ');
+    const area = `${linea} L${X(h.length - 1).toFixed(1)},${alto - m.b} L${X(0).toFixed(1)},${alto - m.b} Z`;
+    const marcas = [min, max].map((v) => `<line x1="${m.l}" x2="${ancho - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rejilla)" stroke-width="1"/><text x="${ancho - m.r + 6}" y="${Y(v) + 4}" font-size="11" fill="var(--texto-3)">${num(v, 0)} €</text>`).join('');
+    grafico = `
+      <svg class="chispa" viewBox="0 0 ${ancho} ${alto}" role="img" aria-label="Precio del ${esc(p.ing)} en los últimos albaranes">
+        ${marcas}
+        <path d="${area}" fill="var(--barra)" fill-opacity="0.1"/>
+        <path d="${linea}" fill="none" stroke="var(--barra)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${h.map((x, i) => `<circle cx="${X(i)}" cy="${Y(x[1])}" r="${i === h.length - 1 ? 5 : 9}" fill="${i === h.length - 1 ? 'var(--barra)' : 'transparent'}" stroke="${i === h.length - 1 ? 'var(--superficie)' : 'none'}" stroke-width="2" data-tip="${fecha(x[0])} · ${eur(x[1])}/kg"/>`).join('')}
+        ${h.map((x, i) => (i === 0 || i === h.length - 1) ? `<text x="${X(i)}" y="${alto - 6}" font-size="11" fill="var(--texto-3)" text-anchor="${i ? 'end' : 'start'}">${fecha(x[0])}</text>` : '').join('')}
+      </svg>
+      <p class="bajada" style="margin:4px 0 0"><span class="ej">Ejemplo</span> Historial inventado para enseñar cómo se ve: de momento solo existe el precio del 21 oct.</p>`;
+  } else {
+    grafico = '<p class="cuadre">Aún no hay historial. Con el próximo albarán que traiga este producto se verá si ha subido.</p>';
+  }
+  $('#detalle-precio').innerHTML = `
+    <h3>${esc(p.ing)}</h3>
+    <p class="bajada">${esc(p.prov)} · último albarán ${fecha(p.fecha)}</p>
+    <div class="grande num" style="font-size:2rem">${num(p.precio, p.precio < 1 ? 3 : 2)} €<span style="font-size:1rem;color:var(--texto-3)">/${esc(p.ud)}</span></div>
+    <div style="margin-top:12px">${grafico}</div>
+    ${usado.length ? `<p style="margin:12px 0 0;font-size:0.9rem">Se usa en: ${usado.map((u) => `<button class="btn sec peq" data-plato="${u.id}">${esc(u.nombre)}</button>`).join(' ')}</p>` : ''}`;
+}
+
+// ---------- Escandallos ----------
+function pintarPlatos() {
+  pintarTablaPlatos();
+  pintarCalculadora();
+}
+
+function pintarTablaPlatos() {
+  $('#t-platos').innerHTML = PLATOS.map((p) => {
+    const c = calcular(p);
+    return `<tr class="clic" data-plato="${p.id}" aria-selected="${p.id === platoSel}">
+      <td><b>${esc(p.nombre)}</b></td>
+      <td>${esc(p.ing)}<span class="orig">${p.prov ? esc(p.prov) : 'sin proveedor en los albaranes'}</span></td>
+      <td class="d">${p.precioKg ? `${num(p.precioKg)} €/kg` : '—'}</td>
+      <td class="d">${p.rend} %${p.rend === 100 ? '' : ' <span class="ej">Ejemplo</span>'}</td>
+      <td class="d">${c ? `${p.falta ? '≥ ' : ''}${eur(c.coste)}` : '—'}</td>
+      <td class="d">${eur(p.pvp)}</td>
+      <td class="d">${c ? `${p.falta ? '≥ ' : ''}${pct(c.porcentaje)}` : '—'}</td>
+      <td>${estadoCoste(c ? c.porcentaje : null, !!p.falta)}</td></tr>`;
+  }).join('');
+}
+
+function pintarCalculadora() {
+  const p = PLATOS.find((x) => x.id === platoSel);
+  const c = calcular(p);
+  if (!c) {
+    $('#calculadora').innerHTML = `<h3>${esc(p.nombre)}</h3>
+      <p class="bajada">Ingrediente principal: ${esc(p.ing)}${p.prov ? ` (${esc(p.prov)})` : ''}</p>
+      <div class="nota-falta">Todavía no hay ningún albarán con el precio del ${esc(p.ing.toLowerCase())}. ${p.prov ? `En cuanto se suba uno de ${esc(p.prov)}, este plato se calcula solo.` : 'Hay que saber a qué proveedor se compra.'}</div>`;
+    return;
+  }
+  $('#calculadora').innerHTML = `
+    <div class="titulo-vista" style="margin-bottom:12px">
+      <div><h3 style="font-size:1.15rem">${esc(p.nombre)}</h3>
+      <p class="bajada" style="margin:2px 0 0">${esc(p.ing)} · ${esc(p.prov)} · precio del último albarán</p></div>
+    </div>
+    ${p.falta ? `<div class="nota-falta" style="margin-bottom:12px">Solo está la carne. Faltan ${esc(p.falta)}: el coste real es más alto.</div>` : ''}
+    <div class="calc">
+      <div class="campos">
+        <div class="campo"><label for="c-precio">Precio de compra (€/kg, sin IVA)</label><input type="number" id="c-precio" step="0.01" min="0" value="${p.precioKg}"></div>
+        <div class="campo"><label for="c-gramos">Gramos por ración, en crudo y limpios ${p.gramosEj ? '<span class="ej">Ejemplo</span>' : ''}</label><input type="number" id="c-gramos" step="10" min="50" value="${p.gramos}"></div>
+        <div class="campo" style="grid-column:1/-1">
+          <div class="fila"><label for="c-rend">Rendimiento: lo que queda tras limpiar la pieza ${p.rend === 100 && p.id === 'burger' ? '' : '<span class="ej">Ejemplo</span>'}</label><b class="num" id="c-rend-val">${p.rend} %</b></div>
+          <input type="range" id="c-rend" min="50" max="100" step="1" value="${p.rend}">
+          <span class="bajada" style="margin:0" id="c-raciones"></span>
+        </div>
+        <div class="campo"><label for="c-pvp">Precio en carta (con IVA) <span class="est">Estimado</span></label><input type="number" id="c-pvp" step="0.05" min="0" value="${p.pvp}"></div>
+        <div class="campo"><label for="c-pvp-sin">Precio en carta sin IVA (10 %)</label><input type="number" id="c-pvp-sin" disabled></div>
+      </div>
+      <div class="resultado" id="calc-res"></div>
+    </div>`;
+  pintarResultado(p);
+  const leer = () => {
+    p.precioKg = Number($('#c-precio').value) || p.precioKg;
+    p.gramos = Number($('#c-gramos').value) || p.gramos;
+    p.rend = Number($('#c-rend').value);
+    p.pvp = Number($('#c-pvp').value) || p.pvp;
+    $('#c-rend-val').textContent = `${p.rend} %`;
+    pintarResultado(p);
+    pintarTablaPlatos();
+    pintarResumen();
+    pintarVentas();
+  };
+  for (const id of ['#c-precio', '#c-gramos', '#c-pvp', '#c-rend']) $(id).addEventListener('input', leer);
+}
+
+function pintarResultado(p) {
+  const c = calcular(p);
+  const color = c.porcentaje <= objetivo ? 'var(--bien)' : c.porcentaje <= objetivo + 0.05 ? 'var(--aviso)' : 'var(--mal)';
+  const escala = 0.6;
+  const rends = [65, 70, 75, 80, 85, 90];
+  $('#c-pvp-sin').value = c.pvpSin.toFixed(2);
+  $('#c-raciones').innerHTML = `De 1 kg comprado salen <b class="num">${num(c.raciones, 1)}</b> raciones de ${p.gramos} g. El jefe lo mide pesando una pieza antes y después de limpiarla.`;
+  $('#calc-res').innerHTML = `
+        <div>
+          <div class="bajada" style="margin:0">Coste de la carne sobre el precio sin IVA</div>
+          <div class="grande" style="color:var(--texto)">${p.falta ? '≥ ' : ''}${pct(c.porcentaje, 1)} ${estadoCoste(c.porcentaje, false)}</div>
+        </div>
+        <div>
+          <div class="medidor" data-tip="Objetivo ${pct(objetivo)} · actual ${pct(c.porcentaje, 1)}"><i style="width:${Math.min(c.porcentaje / escala, 1) * 100}%;background:${color}"></i><b style="left:${(objetivo / escala) * 100}%"></b></div>
+          <div class="medidor-et"><span>0 %</span><span>objetivo ${pct(objetivo)}</span><span>60 %</span></div>
+        </div>
+        <div class="pares">
+          <div class="par"><div class="et">Coste por ración</div><div class="val">${eur(c.coste)}</div></div>
+          <div class="par"><div class="et">Margen por ración (sin IVA)</div><div class="val">${eur(c.margen)}</div></div>
+          <div class="par"><div class="et">Precio para llegar al ${pct(objetivo)}</div><div class="val">${eur(c.sugerido)}</div></div>
+          <div class="par"><div class="et">Diferencia con la carta</div><div class="val">${c.sugerido - p.pvp > 0 ? '+' : ''}${eur(c.sugerido - p.pvp)}</div></div>
+        </div>
+        <div>
+          <div class="bajada" style="margin:0 0 6px">Si el rendimiento real fuera otro, el coste quedaría así:</div>
+          <div class="sensibilidad">${rends.map((r) => {
+            const cc = calcular({ ...p, rend: r });
+            return `<div class="${r === p.rend ? 'actual' : ''}"><small>${r} %</small><b>${pct(cc.porcentaje)}</b></div>`;
+          }).join('')}</div>
+        </div>`;
+}
+
+// ---------- Ventas ----------
+function pintarVentas() {
+  const [a23, , a25] = VENTAS_ANIO;
+  const top = [...VENTAS_PLATOS].sort((x, y) => y[3] - x[3])[0];
+  $('#cifras-ventas').innerHTML = `
+    <div class="cifra"><span class="et">Noches con ventas después de las 23:00</span><span class="val">${a25.noches}</span><span class="det">en 2025 · ${a23.noches} en 2023 (${pct(a25.noches / a23.noches - 1)})</span></div>
+    <div class="cifra"><span class="et">Unidades por noche</span><span class="val">${num(a25.uds / a25.noches, 0)}</span><span class="det">en 2025 · ${num(a23.uds / a23.noches, 0)} en 2023 (${pct((a25.uds / a25.noches) / (a23.uds / a23.noches) - 1)})</span></div>
+    <div class="cifra"><span class="et">Plato principal más vendido</span><span class="val" style="font-size:1.25rem">${esc(top[0])}</span><span class="det">${top[3]} raciones en 2025 · ${top[1]} en 2023</span></div>
+    <div class="cifra"><span class="et">Falta para ver la facturación</span><span class="val" style="font-size:1.25rem">Ventas con importes</span><span class="det">el TPV exportó 2022–2025 sin precios</span></div>`;
+  const max = Math.max(...VENTAS_ANIO.map((a) => a.uds));
+  $('#g-anios').innerHTML = VENTAS_ANIO.map((a, i) => {
+    const prev = VENTAS_ANIO[i - 1];
+    return `<div class="col" data-tip="${a.anio} · ${num(a.uds, 0)} unidades · ${a.noches} noches${prev ? ` · ${pct(a.uds / prev.uds - 1)} vs ${prev.anio}` : ''}">
+      <span class="v">${num(a.uds, 0)}</span><i style="height:${(a.uds / max) * 170}px"></i></div>`;
+  }).join('');
+  $('#g-anios-et').innerHTML = VENTAS_ANIO.map((a, i) => `<span>${a.anio}${i ? `<small>${pct(a.uds / VENTAS_ANIO[i - 1].uds - 1)}</small>` : '<small>&nbsp;</small>'}</span>`).join('');
+  const conMargen = PLATOS.filter((p) => p.precioKg && !p.falta).map((p) => {
+    const c = calcular(p);
+    return { etiqueta: p.nombre, valor: c.margen * p.v2025, extra: `${p.v2025} raciones × ${eur(c.margen)}` };
+  }).sort((a, b) => b.valor - a.valor);
+  barras($('#g-margen'), conMargen, 0);
+  $('#t-ventas').innerHTML = VENTAS_PLATOS.map(([n, a, b, c]) => {
+    const cambio = c / a - 1;
+    return `<tr><td>${esc(n)}</td><td class="d">${a}</td><td class="d">${b}</td><td class="d"><b>${c}</b></td>
+      <td class="d"><span class="estado ${cambio < -0.5 ? 'mal' : cambio < -0.2 ? 'aviso' : cambio > 0 ? 'bien' : 'neutro'}">${cambio > 0 ? '+' : ''}${pct(cambio)}</span></td></tr>`;
+  }).join('');
+}
+
+function pintarResultadoSiHay() {
+  const p = PLATOS.find((x) => x.id === platoSel);
+  if (calcular(p) && $('#calc-res')) pintarResultado(p);
+}
+
+// ---------- Navegación ----------
+const VISTAS = ['resumen', 'albaranes', 'precios', 'escandallos', 'ventas'];
+let vista = 'resumen';
+function mostrar(v, cambiarHash = true) {
+  vista = VISTAS.includes(v) ? v : 'resumen';
+  for (const id of VISTAS) $(`#v-${id}`).hidden = id !== vista;
+  document.querySelectorAll('.nav button').forEach((b) => {
+    if (b.dataset.vista === vista) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  if (cambiarHash) { try { history.replaceState(null, '', `#${vista}`); } catch { /* el visor puede no dejar */ } }
+  window.scrollTo(0, 0);
+}
+function pintarTodo() {
+  pintarResumen();
+  pintarAlbaranes();
+  pintarPrecios();
+  pintarPlatos();
+  pintarVentas();
+  $('#cuenta-albaranes').textContent = ALBARANES.filter((a) => a.estado !== 'revisado').length;
+}
+
+document.addEventListener('click', (ev) => {
+  const t = ev.target;
+  const nav = t.closest('.nav button');
+  if (nav) return mostrar(nav.dataset.vista);
+  const ir = t.closest('[data-ir]');
+  if (ir) {
+    const destino = ir.dataset.ir;
+    if (destino === 'precio') { ingSel = 'Lomo alto argentino (bife alto)'; pintarPrecios(); return mostrar('precios'); }
+    if (destino) { albaranSel = destino; pintarAlbaranes(); return mostrar('albaranes'); }
+    return mostrar('albaranes');
+  }
+  const fa = t.closest('[data-albaran]');
+  if (fa) { albaranSel = fa.dataset.albaran; return pintarAlbaranes(); }
+  const fp = t.closest('[data-plato]');
+  if (fp) { platoSel = fp.dataset.plato; pintarPlatos(); if (vista !== 'escandallos') mostrar('escandallos'); return; }
+  const fi = t.closest('[data-ing]');
+  if (fi) { ingSel = fi.dataset.ing; return pintarPrecios(); }
+  const fc = t.closest('[data-cat]');
+  if (fc) { catPrecios = fc.dataset.cat; return pintarPrecios(); }
+  const acc = t.closest('[data-accion]');
+  if (acc) {
+    if (acc.dataset.accion === 'subir') return abrirSubida();
+    if (acc.dataset.accion === 'confirmar') {
+      const a = ALBARANES.find((x) => x.id === albaranSel);
+      if (a.estado !== 'incidencia' && a.estado !== 'incompleto') { a.estado = 'revisado'; a.estadoTxt = 'Revisado'; }
+      return pintarTodo();
+    }
+    if (acc.dataset.accion === 'reclamar') {
+      acc.textContent = 'Texto copiado para el comercial';
+      const texto = 'Hola, en el albarán 4538208589 del 22/10 se cobra 1 caja de Fanta naranja (17,10 € + IVA) que no se cargó. ¿Nos hacéis el abono? Gracias. Restaurante Morelia';
+      try { navigator.clipboard.writeText(texto).catch(() => {}); } catch { /* sin portapapeles */ }
+    }
+  }
+});
+
+document.addEventListener('input', (ev) => {
+  if (ev.target.id === 'buscar') {
+    busqueda = ev.target.value;
+    const pos = ev.target.selectionStart;
+    pintarPrecios();
+    const el = $('#buscar'); el.focus(); el.setSelectionRange(pos, pos);
+  }
+  if (ev.target.id === 'objetivo') {
+    const v = Number(ev.target.value);
+    if (v >= 15 && v <= 50) { objetivo = v / 100; pintarResumen(); pintarTablaPlatos(); pintarResultadoSiHay(); pintarVentas(); }
+  }
+});
+
+// Tooltip compartido para barras, columnas, puntos y el medidor.
+const tip = $('#tip');
+document.addEventListener('pointermove', (ev) => {
+  const el = ev.target.closest('[data-tip]');
+  if (!el) { tip.hidden = true; return; }
+  tip.textContent = el.dataset.tip;
+  tip.hidden = false;
+  const x = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+  const y = ev.clientY + 16 + tip.offsetHeight > window.innerHeight ? ev.clientY - tip.offsetHeight - 10 : ev.clientY + 16;
+  tip.style.left = `${Math.max(8, x)}px`;
+  tip.style.top = `${y}px`;
+});
+document.addEventListener('pointerleave', () => { tip.hidden = true; });
+
+pintarTodo();
+mostrar((location.hash || '').replace('#', ''), false);
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ Webapp para consultar y organizar los horarios semanales de sala y cocina.
 - **Empleados** (`/`): eligen su nombre y ven su semana; también pueden ver todo el equipo por día o la semana completa, y los horarios pasados.
 - **Editor** (`/admin.html`): protegido con PIN. Se edita en la tablet, se crean semanas nuevas copiando la anterior, se exporta la imagen para WhatsApp y se publica.
 - **Control de stock** (`/stock.html`): los cocineros cuentan su zona en el móvil y el jefe de cocina recibe el pedido agrupado por proveedor.
+- **Maqueta de gestión** (`/gestion.html`): muestra de cómo se verían albaranes, precios de compra, escandallos y ventas. No guarda nada: los datos van dentro de la página.
 
 ## Cómo funciona sin base de datos
 
