@@ -379,7 +379,7 @@ svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
         </div>
       </div>
       <div class="tabla-cont"><table>
-        <thead><tr><th>Plato</th><th>Ingrediente principal</th><th class="d">Compra</th><th class="d">Rendim.</th><th class="d">Coste ración</th><th class="d">Precio carta</th><th class="d">% coste</th><th class="d">Vendidos sep–oct</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Plato</th><th>Ingrediente principal</th><th class="d">Compra</th><th class="d">Rendim.</th><th class="d">Coste ración</th><th class="d">Precio carta</th><th class="d">% coste</th><th class="d">Vendidos sep + oct</th><th>Estado</th></tr></thead>
         <tbody id="t-platos"></tbody>
       </table></div>
       <div class="tarjeta" id="calculadora"></div>
@@ -398,35 +398,29 @@ svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
       <div class="titulo-vista">
         <div>
           <h2>Ventas</h2>
-          <p>Octubre sale del informe diario del TPV: cuentas e importe de cada día. Debajo, el histórico de las 23:00 al cierre de 2023 a 2025, con cantidades por plato.</p>
+          <p>Se cuenta desde septiembre: el informe por platos de cada mes y, de octubre, también el informe diario.</p>
         </div>
       </div>
-      <h3 class="seccion">Octubre 2026 · del 1 al 24</h3>
-      <div class="rejilla-4" id="cifras-octubre"></div>
-      <div class="rejilla-ancha">
-        <div class="tarjeta">
-          <h3>Ventas por día</h3>
-          <p class="bajada">Importe con IVA de cada día abierto. El 24 está incompleto: el informe se sacó ese día a las 20:14.</p>
-          <div id="g-dias"></div>
-        </div>
-        <div class="tarjeta">
-          <h3>Media por día de la semana</h3>
-          <p class="bajada">Sin contar el 24. El único lunes abierto fue el 12, festivo.</p>
-          <div class="barras" id="g-semana"></div>
-        </div>
+      <h3 class="seccion">Septiembre frente a octubre</h3>
+      <div class="tarjeta">
+        <div class="tabla-cont"><table>
+          <thead><tr><th></th><th class="d">Septiembre<br><small style="text-transform:none;letter-spacing:0">mes completo</small></th><th class="d">Octubre<br><small style="text-transform:none;letter-spacing:0">hasta el 24</small></th></tr></thead>
+          <tbody id="t-meses"></tbody>
+        </table></div>
+        <p class="bajada" style="margin:10px 0 0" id="nota-meses"></p>
       </div>
-      <div class="tarjeta" id="compras-ventas"></div>
-      <h3 class="seccion">Septiembre y octubre · plato a plato</h3>
+      <h3 class="seccion">Plato a plato</h3>
+      <div class="filtros" id="filtro-mes"></div>
       <div class="rejilla-4" id="cifras-articulos"></div>
       <div class="rejilla-2">
         <div class="tarjeta">
           <h3>Comida que más factura</h3>
-          <p class="bajada">Importe con IVA. Las 12 primeras de 74.</p>
+          <p class="bajada" id="bajada-comida"></p>
           <div class="barras" id="g-comida"></div>
         </div>
         <div class="tarjeta">
           <h3>Bebida que más factura</h3>
-          <p class="bajada">Importe con IVA. Las 8 primeras de 80.</p>
+          <p class="bajada" id="bajada-bebida"></p>
           <div class="barras" id="g-bebida"></div>
         </div>
       </div>
@@ -439,24 +433,21 @@ svg.chispa { width: 100%; height: 120px; display: block; overflow: visible; }
         </table></div>
         <p class="bajada" style="margin:10px 0 0">El precio medio cobrado sale por encima del de carta porque incluye el 10 % de terraza.</p>
       </div>
-      <h3 class="seccion">Histórico · de las 23:00 al cierre, 2023–2025</h3>
-      <div class="rejilla-4" id="cifras-ventas"></div>
-      <div>
+      <h3 class="seccion">Octubre día a día · del 1 al 24</h3>
+      <div class="rejilla-4" id="cifras-octubre"></div>
+      <div class="rejilla-ancha">
         <div class="tarjeta">
-          <h3>Unidades vendidas después de las 23:00</h3>
-          <p class="bajada">Todos los productos, por año. 2022 solo tiene datos desde octubre y queda fuera.</p>
-          <div class="columnas" id="g-anios"></div>
-          <div class="columnas-et" id="g-anios-et"></div>
+          <h3>Ventas por día</h3>
+          <p class="bajada">Importe con IVA de cada día abierto. El 24 está incompleto: el informe diario se sacó ese día a las 20:14.</p>
+          <div id="g-dias"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Media por día de la semana</h3>
+          <p class="bajada">Sin contar el 24. El único lunes abierto fue el 12, festivo.</p>
+          <div class="barras" id="g-semana"></div>
         </div>
       </div>
-      <div class="tarjeta">
-        <h3>Platos principales: raciones vendidas por año</h3>
-        <p class="bajada">Franja de las 23:00 al cierre.</p>
-        <div class="tabla-cont"><table>
-          <thead><tr><th>Plato</th><th class="d">2023</th><th class="d">2024</th><th class="d">2025</th><th class="d">2025 vs 2023</th></tr></thead>
-          <tbody id="t-ventas"></tbody>
-        </table></div>
-      </div>
+      <div class="tarjeta" id="compras-ventas"></div>
     </section>
   </main>
 </div>
@@ -531,14 +522,14 @@ const HISTORIAL_EJEMPLO = {
 
 // Platos con escandallo: precios de la carta actual (IVA del 10 % incluido).
 const PLATOS = [
-  { id: 'entrecot250', tpv: 'ENTRECOTE 250 GR', nombre: 'Entrecot 250 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 250, pvp: 31, v2025: 43 },
-  { id: 'entrecot350', tpv: 'ENTRECOTE 350GR', nombre: 'Entrecot 350 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 350, pvp: 41, v2025: 18 },
-  { id: 'solomillo', tpv: 'SOLOMILLO DE TERNERA', nombre: 'Solomillo de ternera 250 g', ing: 'Solomillo de ternera argentino', prov: 'Eurocampa', precioKg: 38.90, rend: 80, gramos: 250, pvp: 37, v2025: 25, falta: 'milhojas de patata y salsa' },
-  { id: 'milanesa', tpv: 'MILANESA NAPOLITANA', nombre: 'Milanesa napolitana', ing: 'Redondo de ternera', prov: 'Escofet Oliver', precioKg: 12.10, rend: 85, gramos: 200, pvp: 17.5, v2025: 110, falta: 'rebozado, tomate, mozzarella y puré de patata', gramosEj: true },
-  { id: 'burger', tpv: 'BURGUER BACON & CHEDDAR', nombre: 'Hamburguesa 250 g bacon y cheddar', ing: 'Carne picada de vaca', prov: 'Escofet Oliver', precioKg: 12.50, rend: 100, gramos: 250, pvp: 17, v2025: 118, falta: 'pan, cebolla caramelizada, bacon, cheddar y patatas fritas' },
-  { id: 'entrana', tpv: 'ENTRAÑA', nombre: 'Entraña de ternera', ing: 'Entraña', prov: 'Rubén Viñas', precioKg: null, rend: 85, gramos: 250, pvp: 19, v2025: 90 },
-  { id: 'vacio', tpv: 'VACIO', nombre: 'Vacío de ternera', ing: 'Vacío', prov: null, precioKg: null, rend: 85, gramos: 250, pvp: 18, v2025: 49 },
-  { id: 'mollejas', tpv: 'MOLLEJAS DE TERNERA', nombre: 'Mollejas de ternera', ing: 'Mollejas de ternera', prov: 'Eduardo', precioKg: null, rend: 85, gramos: 250, pvp: 18, v2025: 18 },
+  { id: 'entrecot250', tpv: 'ENTRECOTE 250 GR', nombre: 'Entrecot 250 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 250, pvp: 31 },
+  { id: 'entrecot350', tpv: 'ENTRECOTE 350GR', nombre: 'Entrecot 350 g', ing: 'Lomo alto argentino (bife alto)', prov: 'Eurocampa', precioKg: 29.90, rend: 85, gramos: 350, pvp: 41 },
+  { id: 'solomillo', tpv: 'SOLOMILLO DE TERNERA', nombre: 'Solomillo de ternera 250 g', ing: 'Solomillo de ternera argentino', prov: 'Eurocampa', precioKg: 38.90, rend: 80, gramos: 250, pvp: 37, falta: 'milhojas de patata y salsa' },
+  { id: 'milanesa', tpv: 'MILANESA NAPOLITANA', nombre: 'Milanesa napolitana', ing: 'Redondo de ternera', prov: 'Escofet Oliver', precioKg: 12.10, rend: 85, gramos: 200, pvp: 17.5, falta: 'rebozado, tomate, mozzarella y puré de patata', gramosEj: true },
+  { id: 'burger', tpv: 'BURGUER BACON & CHEDDAR', nombre: 'Hamburguesa 250 g bacon y cheddar', ing: 'Carne picada de vaca', prov: 'Escofet Oliver', precioKg: 12.50, rend: 100, gramos: 250, pvp: 17, falta: 'pan, cebolla caramelizada, bacon, cheddar y patatas fritas' },
+  { id: 'entrana', tpv: 'ENTRAÑA', nombre: 'Entraña de ternera', ing: 'Entraña', prov: 'Rubén Viñas', precioKg: null, rend: 85, gramos: 250, pvp: 19 },
+  { id: 'vacio', tpv: 'VACIO', nombre: 'Vacío de ternera', ing: 'Vacío', prov: null, precioKg: null, rend: 85, gramos: 250, pvp: 18 },
+  { id: 'mollejas', tpv: 'MOLLEJAS DE TERNERA', nombre: 'Mollejas de ternera', ing: 'Mollejas de ternera', prov: 'Eduardo', precioKg: null, rend: 85, gramos: 250, pvp: 18 },
 ];
 
 // Carta actual completa, por secciones: [nombre, precio con IVA, plato con escandallo].
@@ -554,170 +545,351 @@ const CARTA = [
   ['Postres', [['Tiramisú Morelia', 7.5], ['Coulant de chocolate', 8.5], ['Panqueque de dulce de leche', 8], ['Crème brûlée', 6.5], ['Panacotta de coco', 8], ['Crumble de manzana', 7.5], ['Helados (2 bolas)', 6.5]]],
 ];
 
-// Informe de ventas por artículo del TPV (el archivo no trae fechas: según nos dijiste, septiembre y octubre hasta el 24).
-// [nombre en el TPV, unidades (con decimales al dividir cuentas), importe con IVA]
-const ARTICULOS_COMIDA = [
-  ["BURGUER BACON & CHEDDAR", 115.57, 2073.27],
-  ["PARRILLADA X2", 35.13, 1618.52],
-  ["MUSLO DE POLLO", 86.27, 1592.53],
-  ["ENTRAÑA", 81.05, 1576.91],
-  ["MENU PARRILLADA", 59.12, 1543.11],
-  ["MILANESA NAPOLITANA", 78.15, 1453.81],
-  ["LINGUINI CON SALSA A ESCOGER", 79.09, 1358.76],
-  ["PATATAS BRAVAS", 186.73, 1329.92],
-  ["SOLOMILLO DE CERDO", 62.02, 1141.83],
-  ["ENTRECOTE 250 GR", 33.0, 1112.9],
-  ["CHIPIRONES", 108.25, 999.36],
-  ["ANTIPASTO MORELIA", 61.11, 988.92],
-  ["TAGLIATELLE AL SALMON", 47.78, 944.21],
-  ["SOLOMILLO DE TERNERA", 23.03, 922.33],
-  ["CROQUETAS JAMON", 112.97, 879.72],
-  ["SALMON", 38.2, 766.27],
-  ["RULO DE POLLO", 40.11, 761.61],
-  ["ENSALADA TERIYAKI", 43.34, 745.42],
-  ["VACIO", 36.14, 684.8],
-  ["PAN CON TOMATE", 105.5, 676.18],
-  ["PARRILLADA DE VERDURAS", 45.02, 671.04],
-  ["COSTILLAS DE CERDO (RIBS)", 36.01, 664.95],
-  ["ENSALADA CAPRESE", 44.0, 662.37],
-  ["EMPANADA DE CARNE", 143.18, 602.41],
-  ["CHORIPAN", 96.26, 567.07],
-  ["RISOTTO FUNGHI PORCINI", 30.46, 557.77],
-  ["GAMBAS A LA PLANCHA", 32.0, 556.79],
-  ["RACION DE FRITAS", 73.05, 555.14],
-  ["ENSALADA MORELIA", 34.0, 555.0],
-  ["LINGUINI FRUTTI DI MARE", 26.32, 519.41],
-  ["ENSALADA TIBIA", 32.34, 517.14],
-  ["RISOTTO del MAR", 23.0, 442.75],
-  ["HUEVOS CON JAMON", 47.02, 410.55],
-  ["PLATO DE JAMON", 27.0, 400.48],
-  ["PIMIENTOS DEL PADRON", 52.24, 393.96],
-  ["RISOTTO VERDE", 23.0, 382.58],
-  ["EMPANADA DE CEBOLLA", 91.02, 374.64],
-  ["PATATAS PROVENZAL", 43.02, 353.19],
-  ["BURGUER RUCULA & HUEVO", 19.0, 345.4],
-  ["EMPANADA DE POLLO", 80.01, 340.5],
-  ["BOQUERONES", 43.0, 327.6],
-  ["TIRAMISU", 40.0, 318.75],
-  ["EMPANADA DE J & Q", 64.01, 280.06],
-  ["TAPA DE HUMMUS", 40.26, 277.25],
-  ["PROVOLETA CON JAMON SERRANO", 23.0, 277.2],
-  ["PROVOLETA CON OREGANO", 22.0, 260.7],
-  ["MEDIA RACION DE FRITAS", 44.14, 250.8],
-  ["PROVOLETA CON TOMATES SECOS", 21.0, 249.7],
-  ["CRUMBLE DE MANZANA", 35.0, 243.84],
-  ["COULANT DE CHOCOLATE", 26.0, 240.55],
-  ["HELADOS (2 BOLAS)", 36.0, 231.4],
-  ["PANQUEQUE DE DULCE DE LECHE", 28.0, 224.03],
-  ["PANACOTA DE COCO & MANGO", 25.0, 217.6],
-  ["CREME BRULEE", 30.69, 217.5],
-  ["MEDIA PARRI DE VERDURAS", 25.13, 210.78],
-  ["ENSALADA DE RUCULA", 17.01, 206.49],
-  ["PURE PAPAS", 31.13, 197.06],
-  ["HUEVOS CON CHORIZO", 20.23, 175.66],
-  ["MOLLEJAS DE TERNERA", 8.0, 156.6],
-  ["PARRILADA Y MEDIA", 2.0, 148.5],
-  ["OLIVAS", 34.0, 138.6],
-  ["ENTRECOTE 350GR", 3.0, 135.3],
-  ["CHORIZO", 27.0, 113.1],
-  ["SOPA", 14.01, 101.6],
-  ["GRATEN DE PATATAS", 8.0, 52.2],
-  ["PROVOLETA CON CHIMICHURRI", 4.0, 47.3],
-  ["PAN", 55.0, 29.8],
-  ["VARIOS COMIDA", 7.0, 20.5],
-  ["MORCILLA", 4.0, 17.16],
-  ["MAYO", 23.0, 16.8],
-  ["KETCHUP", 15.0, 11.2],
-  ["SALSA 4 QUESOS", 3.0, 6.6],
-  ["ALI OLI", 8.0, 5.6],
-  ["SALSA 3P", 1.0, 2.2],
-];
-const ARTICULOS_BEBIDA = [
-  ["CAÑA", 643.88, 2411.09],
-  ["COCKTAIL CLASICOS", 167.29, 1643.55],
-  ["AGUA MESA", 371.78, 1255.13],
-  ["JARRA 1/2 LITRO", 169.53, 1149.28],
-  ["APEROL SPRITZ", 118.59, 911.71],
-  ["COPA VINO", 243.06, 890.79],
-  ["STELLA ARTOIS", 221.54, 822.62],
-  ["COCA COLA ZERO", 183.83, 687.88],
-  ["COCKTAIL RECOMENDADO", 63.03, 687.3],
-  ["SANGRIA VINO LITRO", 34.34, 679.06],
-  ["AGUA CON GAS", 172.0, 647.57],
-  ["COPA SANGRIA", 83.52, 577.07],
-  ["COCA COLA", 141.67, 523.8],
-  ["SAN MIGUEL 0%", 84.01, 441.11],
-  ["ALHAMBRA VERDE 1925", 95.52, 439.17],
-  ["VERMOUTH CASERO", 79.0, 407.62],
-  ["COCKTAIL SIN ALCOHOL", 45.49, 397.89],
-  ["COPA MALBEC", 75.14, 384.62],
-  ["SANGRIA CAVA LITRO", 18.0, 359.08],
-  ["CLARA", 94.27, 357.28],
-  ["TINTO VERANO", 68.09, 297.58],
-  ["LAGAR DA CACHADA", 10.0, 283.4],
-  ["CORONA", 48.0, 258.23],
-  ["L'EFECTE VOLADOR", 8.0, 234.9],
-  ["COPA CAVA", 53.23, 204.59],
-  ["VINO DE LA CASA", 9.0, 177.1],
-  ["CARE CHARDONNAY", 6.0, 171.6],
-  ["CAFE", 81.13, 164.49],
-  ["AQUARIUS", 48.0, 144.2],
-  ["NESTEA", 44.13, 139.12],
-  ["TANQUERAY", 14.0, 133.8],
-  ["COPA SANGRIA CAVA", 18.0, 130.68],
-  ["10.000hs ROSADO", 5.0, 129.6],
-  ["SEAGRAMS", 13.0, 128.7],
-  ["ZUMOS", 41.13, 125.65],
-  ["COPA ROSADO", 30.0, 124.06],
-  ["BARCELO", 14.0, 121.6],
-  ["FANTA", 36.01, 118.23],
-  ["CINCO SENTIDOS MALBEC", 4.0, 118.1],
-  ["CAFE CON LECHE", 38.0, 113.31],
-  ["VIÑA CIMBRON SAUVIGNON", 4.09, 112.37],
-  ["CAPUCHINO", 26.01, 107.93],
-  ["CABERNET CINCO SENTIDOS", 3.0, 95.7],
-  ["SPRITE", 23.0, 84.35],
-  ["LOU MONTSANT", 3.0, 79.2],
-  ["CORTADO", 36.0, 79.11],
-  ["NORDIC TONICA", 19.0, 72.8],
-  ["ATREVIT", 3.0, 72.6],
-  ["LIMONADA PABLO", 18.0, 72.1],
-  ["CAFE AMERICANO", 29.01, 67.12],
-  ["HENDRICKS", 5.0, 66.05],
-  ["MARTINI", 10.0, 66.0],
-  ["BOMBAY SAPHIRE", 6.0, 66.0],
-  ["VEGA VELLA", 2.0, 61.6],
-  ["SEVILLA", 6.0, 59.4],
-  ["NEGRA DUNKEL", 10.0, 50.5],
-  ["ABSOLUT", 6.0, 48.2],
-  ["BOCCHORIS BRUT NATURE", 2.0, 44.0],
-  ["CARRAMIMBR CRIANZA", 1.0, 36.3],
-  ["JACK DANIELS", 4.0, 35.2],
-  ["CAFE DESCAFEINADO", 14.0, 34.96],
-  ["MARTINEZ LACUESTA", 1.0, 34.1],
-  ["CAFE CON HIELO", 15.0, 33.44],
-  ["BALLANTINES", 4.0, 30.8],
-  ["CARAJILLO", 12.0, 29.04],
-  ["VIÑATERO MALBEC", 1.0, 27.5],
-  ["TE", 9.0, 24.5],
-  ["CAFE DOBLE", 6.0, 19.8],
-  ["CHUPITO", 6.0, 13.2],
-  ["CHUPITO ESPECIAL", 3.0, 13.2],
-  ["MALFI", 1.0, 11.0],
-  ["VERMOUTH CASERO", 2.0, 11.0],
-  ["SMIRNOFF", 1.0, 7.7],
-  ["CAMPARI", 1.0, 7.15],
-  ["MASCARO", 1.0, 6.6],
-  ["COINTREAU", 1.0, 6.05],
-  ["FERNET BRANCA", 1.0, 5.0],
-  ["MAS CODINA BRUT N", 0.05, 1.43],
-  ["CAÑA MENÚ", 2.0, 0.0],
-  ["CLARA MENU", 1.0, 0.0],
-];
-const DESCUENTOS = -3781.77;
+// Ventas por artículo del TPV, un informe por mes: [nombre en el TPV, unidades (con decimales al dividir cuentas), importe con IVA].
+// Los informes no traen fechas: septiembre completo y octubre hasta el 24 (sacado ese día a las 21:23).
+const VENTAS_MES = {
+  sep: {
+    nombre: 'Septiembre', dias: 30, nota: 'mes completo', descuentos: -3781.77,
+    comida: [
+      ["BURGUER BACON & CHEDDAR", 115.57, 2073.27],
+      ["PARRILLADA X2", 35.13, 1618.52],
+      ["MUSLO DE POLLO", 86.27, 1592.53],
+      ["ENTRAÑA", 81.05, 1576.91],
+      ["MENU PARRILLADA", 59.12, 1543.11],
+      ["MILANESA NAPOLITANA", 78.15, 1453.81],
+      ["LINGUINI CON SALSA A ESCOGER", 79.09, 1358.76],
+      ["PATATAS BRAVAS", 186.73, 1329.92],
+      ["SOLOMILLO DE CERDO", 62.02, 1141.83],
+      ["ENTRECOTE 250 GR", 33.0, 1112.9],
+      ["CHIPIRONES", 108.25, 999.36],
+      ["ANTIPASTO MORELIA", 61.11, 988.92],
+      ["TAGLIATELLE AL SALMON", 47.78, 944.21],
+      ["SOLOMILLO DE TERNERA", 23.03, 922.33],
+      ["CROQUETAS JAMON", 112.97, 879.72],
+      ["SALMON", 38.2, 766.27],
+      ["RULO DE POLLO", 40.11, 761.61],
+      ["ENSALADA TERIYAKI", 43.34, 745.42],
+      ["VACIO", 36.14, 684.8],
+      ["PAN CON TOMATE", 105.5, 676.18],
+      ["PARRILLADA DE VERDURAS", 45.02, 671.04],
+      ["COSTILLAS DE CERDO (RIBS)", 36.01, 664.95],
+      ["ENSALADA CAPRESE", 44.0, 662.37],
+      ["EMPANADA DE CARNE", 143.18, 602.41],
+      ["CHORIPAN", 96.26, 567.07],
+      ["RISOTTO FUNGHI PORCINI", 30.46, 557.77],
+      ["GAMBAS A LA PLANCHA", 32.0, 556.79],
+      ["RACION DE FRITAS", 73.05, 555.14],
+      ["ENSALADA MORELIA", 34.0, 555.0],
+      ["LINGUINI FRUTTI DI MARE", 26.32, 519.41],
+      ["ENSALADA TIBIA", 32.34, 517.14],
+      ["RISOTTO del MAR", 23.0, 442.75],
+      ["HUEVOS CON JAMON", 47.02, 410.55],
+      ["PLATO DE JAMON", 27.0, 400.48],
+      ["PIMIENTOS DEL PADRON", 52.24, 393.96],
+      ["RISOTTO VERDE", 23.0, 382.58],
+      ["EMPANADA DE CEBOLLA", 91.02, 374.64],
+      ["PATATAS PROVENZAL", 43.02, 353.19],
+      ["BURGUER RUCULA & HUEVO", 19.0, 345.4],
+      ["EMPANADA DE POLLO", 80.01, 340.5],
+      ["BOQUERONES", 43.0, 327.6],
+      ["TIRAMISU", 40.0, 318.75],
+      ["EMPANADA DE J & Q", 64.01, 280.06],
+      ["TAPA DE HUMMUS", 40.26, 277.25],
+      ["PROVOLETA CON JAMON SERRANO", 23.0, 277.2],
+      ["PROVOLETA CON OREGANO", 22.0, 260.7],
+      ["MEDIA RACION DE FRITAS", 44.14, 250.8],
+      ["PROVOLETA CON TOMATES SECOS", 21.0, 249.7],
+      ["CRUMBLE DE MANZANA", 35.0, 243.84],
+      ["COULANT DE CHOCOLATE", 26.0, 240.55],
+      ["HELADOS (2 BOLAS)", 36.0, 231.4],
+      ["PANQUEQUE DE DULCE DE LECHE", 28.0, 224.03],
+      ["PANACOTA DE COCO & MANGO", 25.0, 217.6],
+      ["CREME BRULEE", 30.69, 217.5],
+      ["MEDIA PARRI DE VERDURAS", 25.13, 210.78],
+      ["ENSALADA DE RUCULA", 17.01, 206.49],
+      ["PURE PAPAS", 31.13, 197.06],
+      ["HUEVOS CON CHORIZO", 20.23, 175.66],
+      ["MOLLEJAS DE TERNERA", 8.0, 156.6],
+      ["PARRILADA Y MEDIA", 2.0, 148.5],
+      ["OLIVAS", 34.0, 138.6],
+      ["ENTRECOTE 350GR", 3.0, 135.3],
+      ["CHORIZO", 27.0, 113.1],
+      ["SOPA", 14.01, 101.6],
+      ["GRATEN DE PATATAS", 8.0, 52.2],
+      ["PROVOLETA CON CHIMICHURRI", 4.0, 47.3],
+      ["PAN", 55.0, 29.8],
+      ["VARIOS COMIDA", 7.0, 20.5],
+      ["MORCILLA", 4.0, 17.16],
+      ["MAYO", 23.0, 16.8],
+      ["KETCHUP", 15.0, 11.2],
+      ["SALSA 4 QUESOS", 3.0, 6.6],
+      ["ALI OLI", 8.0, 5.6],
+      ["SALSA 3P", 1.0, 2.2],
+    ],
+    bebida: [
+      ["CAÑA", 643.88, 2411.09],
+      ["COCKTAIL CLASICOS", 167.29, 1643.55],
+      ["AGUA MESA", 371.78, 1255.13],
+      ["JARRA 1/2 LITRO", 169.53, 1149.28],
+      ["APEROL SPRITZ", 118.59, 911.71],
+      ["COPA VINO", 243.06, 890.79],
+      ["STELLA ARTOIS", 221.54, 822.62],
+      ["COCA COLA ZERO", 183.83, 687.88],
+      ["COCKTAIL RECOMENDADO", 63.03, 687.3],
+      ["SANGRIA VINO LITRO", 34.34, 679.06],
+      ["AGUA CON GAS", 172.0, 647.57],
+      ["COPA SANGRIA", 83.52, 577.07],
+      ["COCA COLA", 141.67, 523.8],
+      ["SAN MIGUEL 0%", 84.01, 441.11],
+      ["ALHAMBRA VERDE 1925", 95.52, 439.17],
+      ["VERMOUTH CASERO", 81.0, 418.62],
+      ["COCKTAIL SIN ALCOHOL", 45.49, 397.89],
+      ["COPA MALBEC", 75.14, 384.62],
+      ["SANGRIA CAVA LITRO", 18.0, 359.08],
+      ["CLARA", 94.27, 357.28],
+      ["TINTO VERANO", 68.09, 297.58],
+      ["LAGAR DA CACHADA", 10.0, 283.4],
+      ["CORONA", 48.0, 258.23],
+      ["L'EFECTE VOLADOR", 8.0, 234.9],
+      ["COPA CAVA", 53.23, 204.59],
+      ["VINO DE LA CASA", 9.0, 177.1],
+      ["CARE CHARDONNAY", 6.0, 171.6],
+      ["CAFE", 81.13, 164.49],
+      ["AQUARIUS", 48.0, 144.2],
+      ["NESTEA", 44.13, 139.12],
+      ["TANQUERAY", 14.0, 133.8],
+      ["COPA SANGRIA CAVA", 18.0, 130.68],
+      ["10.000hs ROSADO", 5.0, 129.6],
+      ["SEAGRAMS", 13.0, 128.7],
+      ["ZUMOS", 41.13, 125.65],
+      ["COPA ROSADO", 30.0, 124.06],
+      ["BARCELO", 14.0, 121.6],
+      ["FANTA", 36.01, 118.23],
+      ["CINCO SENTIDOS MALBEC", 4.0, 118.1],
+      ["CAFE CON LECHE", 38.0, 113.31],
+      ["VIÑA CIMBRON SAUVIGNON", 4.09, 112.37],
+      ["CAPUCHINO", 26.01, 107.93],
+      ["CABERNET CINCO SENTIDOS", 3.0, 95.7],
+      ["SPRITE", 23.0, 84.35],
+      ["LOU MONTSANT", 3.0, 79.2],
+      ["CORTADO", 36.0, 79.11],
+      ["NORDIC TONICA", 19.0, 72.8],
+      ["ATREVIT", 3.0, 72.6],
+      ["LIMONADA PABLO", 18.0, 72.1],
+      ["CAFE AMERICANO", 29.01, 67.12],
+      ["HENDRICKS", 5.0, 66.05],
+      ["MARTINI", 10.0, 66.0],
+      ["BOMBAY SAPHIRE", 6.0, 66.0],
+      ["VEGA VELLA", 2.0, 61.6],
+      ["SEVILLA", 6.0, 59.4],
+      ["NEGRA DUNKEL", 10.0, 50.5],
+      ["ABSOLUT", 6.0, 48.2],
+      ["BOCCHORIS BRUT NATURE", 2.0, 44.0],
+      ["CARRAMIMBR CRIANZA", 1.0, 36.3],
+      ["JACK DANIELS", 4.0, 35.2],
+      ["CAFE DESCAFEINADO", 14.0, 34.96],
+      ["MARTINEZ LACUESTA", 1.0, 34.1],
+      ["CAFE CON HIELO", 15.0, 33.44],
+      ["BALLANTINES", 4.0, 30.8],
+      ["CARAJILLO", 12.0, 29.04],
+      ["VIÑATERO MALBEC", 1.0, 27.5],
+      ["TE", 9.0, 24.5],
+      ["CAFE DOBLE", 6.0, 19.8],
+      ["CHUPITO", 6.0, 13.2],
+      ["CHUPITO ESPECIAL", 3.0, 13.2],
+      ["MALFI", 1.0, 11.0],
+      ["SMIRNOFF", 1.0, 7.7],
+      ["CAMPARI", 1.0, 7.15],
+      ["MASCARO", 1.0, 6.6],
+      ["COINTREAU", 1.0, 6.05],
+      ["FERNET BRANCA", 1.0, 5.0],
+      ["MAS CODINA BRUT N", 0.05, 1.43],
+      ["CAÑA MENÚ", 2.0, 0.0],
+      ["CLARA MENU", 1.0, 0.0],
+    ],
+  },
+  oct: {
+    nombre: 'Octubre', dias: 24, nota: 'hasta el 24 a las 21:23', descuentos: -6142.33,
+    comida: [
+      ["BURGUER BACON & CHEDDAR", 86.54, 1566.55],
+      ["MENU PARRILLADA", 60.05, 1533.66],
+      ["LINGUINI CON SALSA A ESCOGER", 81.01, 1375.89],
+      ["MILANESA NAPOLITANA", 70.8, 1325.96],
+      ["ENTRAÑA", 56.55, 1118.22],
+      ["MUSLO DE POLLO", 57.0, 1038.71],
+      ["PARRILLADA X2", 21.0, 994.5],
+      ["PATATAS BRAVAS", 112.54, 788.89],
+      ["COSTILLAS DE CERDO (RIBS)", 40.55, 734.39],
+      ["SOLOMILLO DE TERNERA", 18.0, 714.1],
+      ["SOLOMILLO DE CERDO", 37.0, 691.25],
+      ["ENSALADA TERIYAKI", 37.0, 633.59],
+      ["SALMON", 30.28, 593.93],
+      ["ANTIPASTO MORELIA", 38.55, 592.99],
+      ["CROQUETAS JAMON", 72.02, 587.61],
+      ["EMPANADA DE CARNE", 136.28, 560.72],
+      ["PAN CON TOMATE", 81.54, 527.73],
+      ["RULO DE POLLO", 27.0, 511.0],
+      ["RACION DE FRITAS", 62.54, 501.74],
+      ["PARRILLADA DE VERDURAS", 33.54, 499.64],
+      ["LINGUINI FRUTTI DI MARE", 25.01, 489.82],
+      ["ENTRECOTE 250 GR", 15.0, 465.0],
+      ["TAGLIATELLE AL SALMON", 23.01, 444.83],
+      ["CHIPIRONES", 46.28, 426.75],
+      ["CHORIPAN", 68.01, 395.41],
+      ["VACIO", 20.43, 371.38],
+      ["ENSALADA TIBIA", 22.27, 362.91],
+      ["ENSALADA CAPRESE", 23.27, 354.11],
+      ["TIRAMISU", 44.27, 347.76],
+      ["BURGUER RUCULA & HUEVO", 19.0, 347.0],
+      ["RISOTTO FUNGHI PORCINI", 18.01, 331.68],
+      ["RISOTTO VERDE", 18.27, 313.51],
+      ["ENSALADA MORELIA", 19.0, 308.99],
+      ["PIMIENTOS DEL PADRON", 39.0, 296.1],
+      ["PLATO DE JAMON", 20.0, 294.0],
+      ["EMPANADA DE CEBOLLA", 64.01, 278.44],
+      ["BOQUERONES", 37.27, 276.46],
+      ["GAMBAS A LA PLANCHA", 15.0, 260.81],
+      ["EMPANADA DE J & Q", 62.28, 260.23],
+      ["ENTRECOTE 350GR", 6.0, 256.5],
+      ["EMPANADA DE POLLO", 58.0, 251.6],
+      ["RISOTTO del MAR", 13.0, 243.25],
+      ["COULANT DE CHOCOLATE", 28.27, 237.95],
+      ["PROVOLETA CON TOMATES SECOS", 19.0, 227.7],
+      ["PATATAS PROVENZAL", 26.27, 223.96],
+      ["CRUMBLE DE MANZANA", 28.0, 222.75],
+      ["CREME BRULEE", 32.0, 221.0],
+      ["PANACOTA DE COCO & MANGO", 24.02, 204.18],
+      ["SOPA", 22.0, 158.5],
+      ["VARIOS COMIDA", 15.27, 153.54],
+      ["PROVOLETA CON CHIMICHURRI", 13.0, 152.9],
+      ["MOLLEJAS DE TERNERA", 8.43, 152.77],
+      ["HUEVOS CON JAMON", 17.0, 148.0],
+      ["HUEVOS CON CHORIZO", 16.0, 139.2],
+      ["HELADOS (2 BOLAS)", 21.04, 137.4],
+      ["PURE PAPAS", 22.29, 135.7],
+      ["PROVOLETA CON OREGANO", 11.01, 129.91],
+      ["PANQUEQUE DE DULCE DE LECHE", 17.0, 128.0],
+      ["MEDIA PARRI DE VERDURAS", 15.0, 126.4],
+      ["ENSALADA DE RUCULA", 9.43, 110.12],
+      ["TAPA DE HUMMUS", 15.0, 106.1],
+      ["PROVOLETA CON JAMON SERRANO", 8.02, 97.06],
+      ["OLIVAS", 22.0, 91.5],
+      ["MEDIA RACION DE FRITAS", 18.0, 88.6],
+      ["CHORIZO", 21.0, 88.53],
+      ["PARRILADA Y MEDIA", 1.0, 74.25],
+      ["GRATEN DE PATATAS", 5.0, 31.8],
+      ["PAN", 46.27, 25.23],
+      ["HELADOS (1 BOLA)", 7.0, 20.4],
+      ["PORCION TARTA", 2.0, 20.4],
+      ["MAYO", 17.0, 11.2],
+      ["KETCHUP", 12.0, 9.6],
+      ["MORCILLA", 2.27, 9.24],
+      ["ALI OLI", 4.0, 2.4],
+      ["SALSA 3P", 1.0, 2.2],
+      ["SALSA 4 QUESOS", 1.0, 0.0],
+    ],
+    bebida: [
+      ["CAÑA", 371.59, 1388.56],
+      ["JARRA 1/2 LITRO", 117.8, 823.11],
+      ["AGUA MESA", 231.02, 776.45],
+      ["COPA VINO", 179.82, 666.37],
+      ["STELLA ARTOIS", 167.0, 625.95],
+      ["COCKTAIL CLASICOS", 63.28, 618.39],
+      ["AGUA CON GAS", 134.27, 500.48],
+      ["COCA COLA ZERO", 135.28, 498.77],
+      ["APEROL SPRITZ", 55.54, 426.21],
+      ["COCKTAIL RECOMENDADO", 38.0, 411.0],
+      ["ALHAMBRA VERDE 1925", 83.27, 378.82],
+      ["COCKTAIL SIN ALCOHOL", 40.0, 348.8],
+      ["COCA COLA", 91.58, 347.94],
+      ["COPA SANGRIA", 48.27, 344.47],
+      ["SANGRIA VINO LITRO", 13.0, 255.79],
+      ["COPA MALBEC", 50.03, 252.06],
+      ["SAN MIGUEL 0%", 43.54, 233.67],
+      ["CLARA", 53.27, 197.03],
+      ["SEAGRAMS", 19.0, 188.11],
+      ["CAFE", 84.0, 176.2],
+      ["CINCO SENTIDOS MALBEC", 5.44, 159.21],
+      ["VIÑATERO MALBEC", 6.0, 157.51],
+      ["ABSOLUT", 13.0, 154.8],
+      ["TINTO VERANO", 35.27, 154.38],
+      ["CORTADO", 65.0, 140.23],
+      ["CAFE CON LECHE", 45.0, 134.86],
+      ["FANTA", 41.0, 134.4],
+      ["SANGRIA CAVA LITRO", 5.0, 110.0],
+      ["VIÑA CIMBRON SAUVIGNON", 4.0, 105.0],
+      ["ZUMOS", 30.27, 98.69],
+      ["NESTEA", 30.27, 98.09],
+      ["VERMOUTH CASERO", 19.01, 97.62],
+      ["CORONA", 18.0, 95.06],
+      ["COPA CAVA", 27.0, 91.35],
+      ["NONA PRIORAT", 2.0, 83.6],
+      ["TANQUERAY", 8.0, 77.4],
+      ["CAPUCHINO", 19.0, 73.05],
+      ["TE", 26.0, 70.5],
+      ["MARTINEZ LACUESTA", 2.0, 68.2],
+      ["COPA ROSADO", 16.0, 67.86],
+      ["SPRITE", 17.28, 64.77],
+      ["BOCCHORIS BRUT NATURE", 3.0, 64.0],
+      ["COPA SANGRIA CAVA", 8.0, 58.08],
+      ["LAGAR DA CACHADA", 2.0, 57.2],
+      ["L'EFECTE VOLADOR", 2.0, 56.7],
+      ["LOU MONTSANT", 2.0, 52.8],
+      ["CAFE AMERICANO", 21.0, 50.38],
+      ["LIMONADA PABLO", 11.0, 49.5],
+      ["NORDES", 4.0, 48.4],
+      ["MASCARO", 6.0, 44.0],
+      ["HENDRICKS", 3.0, 37.2],
+      ["VINO DE LA CASA", 2.0, 35.7],
+      ["CARRAMIMBR CRIANZA", 1.0, 33.0],
+      ["CABERNET CINCO SENTIDOS", 1.0, 29.0],
+      ["VEGA VELLA", 1.0, 28.0],
+      ["MAS CODINA BRUT N", 1.0, 26.4],
+      ["CAFE CON HIELO", 11.0, 26.18],
+      ["CARE CHARDONNAY", 1.0, 26.0],
+      ["JACK DANIELS", 3.0, 25.6],
+      ["ATREVIT", 1.0, 24.2],
+      ["10.000hs ROSADO", 1.0, 24.0],
+      ["BALLANTINES", 3.0, 22.4],
+      ["CARAJILLO", 7.0, 20.46],
+      ["MARTINI", 3.0, 19.8],
+      ["CHUPITO", 7.0, 16.6],
+      ["NORDIC TONICA", 4.0, 15.05],
+      ["AQUARIUS", 4.0, 12.32],
+      ["CAFE DOBLE", 3.0, 9.9],
+      ["FERNET BRANCA", 1.0, 7.7],
+      ["SMIRNOFF", 1.0, 7.7],
+      ["CAFE DESCAFEINADO", 3.0, 7.59],
+      ["CAMPARI", 1.0, 7.15],
+      ["NEGRA DUNKEL", 1.0, 5.05],
+      ["CAÑA MENÚ", 1.0, 0.0],
+    ],
+  },
+};
 
-const PERIODO = 'septiembre y octubre (hasta el 24)';
-const ventasDe = (p) => ARTICULOS_COMIDA.find(([n]) => n === p.tpv);
+let mesVentas = 'oct';
+const mesesSel = () => (mesVentas === 'ambos' ? ['sep', 'oct'] : [mesVentas]);
+const NOMBRE_MESES = { sep: 'septiembre', oct: 'octubre (hasta el 24)', ambos: 'septiembre y octubre (hasta el 24)' };
+
+// Suma los artículos de los meses pedidos (comida o bebida), ordenados por importe.
+function articulos(tipo, meses = mesesSel()) {
+  const suma = new Map();
+  for (const m of meses) {
+    for (const [n, u, i] of VENTAS_MES[m][tipo]) {
+      const a = suma.get(n) || [n, 0, 0];
+      a[1] += u;
+      a[2] += i;
+      suma.set(n, a);
+    }
+  }
+  return [...suma.values()].sort((a, b) => b[2] - a[2]);
+}
+const totalMes = (m) => {
+  const comida = VENTAS_MES[m].comida.reduce((s, a) => s + a[2], 0);
+  const bebida = VENTAS_MES[m].bebida.reduce((s, a) => s + a[2], 0);
+  return { comida, bebida, facturado: comida + bebida, descuentos: VENTAS_MES[m].descuentos, neto: comida + bebida + VENTAS_MES[m].descuentos };
+};
+const ventasDe = (p, meses) => articulos('comida', meses).find(([n]) => n === p.tpv);
 
 // Informe diario del TPV de octubre 2026: [fecha, cuentas, importe con IVA]. El 24 es parcial (informe de las 20:14).
 const VENTAS_OCTUBRE = [
@@ -728,20 +900,6 @@ const VENTAS_OCTUBRE = [
   ['2026-10-21', 15, 759.12], ['2026-10-22', 21, 842.99], ['2026-10-23', 43, 1727.96], ['2026-10-24', 42, 2417.72],
 ];
 const DIA_PARCIAL = '2026-10-24';
-
-// Ventas reales del listado nocturno (unidades por año).
-const VENTAS_ANIO = [
-  { anio: '2023', uds: 18774, noches: 215 },
-  { anio: '2024', uds: 12464, noches: 171 },
-  { anio: '2025', uds: 7462, noches: 144 },
-];
-const VENTAS_PLATOS = [
-  ['Burger bacon & cheddar', 369, 286, 118], ['Entraña', 165, 164, 90], ['Milanesa napolitana', 178, 137, 110],
-  ['Muslo de pollo', 98, 159, 84], ['Costillas de cerdo (ribs)', 152, 106, 56], ['Vacío', 90, 100, 49],
-  ['Solomillo de cerdo', 105, 88, 41], ['Entrecot 250 g', 72, 53, 43], ['Parrillada x2', 63, 65, 42],
-  ['Rulo de pollo', 129, 85, 39], ['Menú parrillada', 166, 71, 25], ['Solomillo de ternera', 94, 47, 25],
-  ['Entrecot 350 g', 20, 12, 18], ['Mollejas de ternera', 28, 31, 18],
-];
 
 // ---------- Utilidades ----------
 const $ = (s) => document.querySelector(s);
@@ -793,7 +951,7 @@ function pintarResumen() {
   const conPrecio = PLATOS.filter((p) => p.precioKg).map((p) => ({ p, c: calcular(p) }));
   const altos = conPrecio.filter(({ c }) => c.porcentaje > objetivo).length;
   $('#cifras-resumen').innerHTML = `
-    <div class="cifra"><span class="et">Vendido en octubre (con IVA)</span><span class="val">${eur(VENTAS_OCTUBRE.reduce((s, d) => s + d[2], 0), 0)}</span><span class="det">del 1 al 24 · TPV</span></div>
+    <div class="cifra"><span class="et">Vendido en octubre (con IVA)</span><span class="val">${eur(totalMes('oct').neto, 0)}</span><span class="det">hasta el 24 · septiembre: ${eur(totalMes('sep').neto, 0)}</span></div>
     <div class="cifra"><span class="et">Gastado (sin IVA)</span><span class="val">${eur(base)}</span><span class="det">5 albaranes · 17–22 oct</span></div>
     <div class="cifra"><span class="et">Albaranes por revisar</span><span class="val">${porRevisar}</span><span class="det">${incompletos.length} con páginas que faltan</span></div>
     <div class="cifra"><span class="et">Posible reclamación</span><span class="val">${eur(17.10 * 1.10)}</span><span class="det">Fanta naranja no entregada, con IVA</span></div>
@@ -802,7 +960,7 @@ function pintarResumen() {
   $('#alertas').innerHTML = [
     { tipo: 'mal', ico: '!', titulo: 'Coca-Cola cobra algo que no llegó', texto: 'La Fanta naranja está anotada a mano "No cargado", pero sus 17,10 € (+ IVA) siguen sumados en el albarán 4538208589.', boton: 'Ver albarán', ir: 'cocacola' },
     { tipo: 'aviso', ico: '2', titulo: 'Faltan páginas', texto: 'Proman Fruits y Coca-Cola subieron solo la página 1 de 2: sin la segunda no se comprueba el total.', boton: 'Ver albarán', ir: 'proman' },
-    { tipo: 'info', ico: '%', titulo: 'Descuentos e invitaciones', texto: `En ${PERIODO} se descontaron ${eur(-DESCUENTOS)}, un ${pct(-DESCUENTOS / (ARTICULOS_COMIDA.concat(ARTICULOS_BEBIDA).reduce((s, a) => s + a[2], 0)), 1)} de lo facturado.`, boton: 'Ver ventas', ir: 'ventas' },
+    { tipo: 'aviso', ico: '%', titulo: 'Los descuentos pasan del 6 % al 15 % de lo facturado', texto: `En octubre (hasta el 24) se han descontado ${eur(-totalMes('oct').descuentos, 0)}, el ${pct(-totalMes('oct').descuentos / totalMes('oct').facturado, 1)} de lo facturado. En septiembre fue el ${pct(-totalMes('sep').descuentos / totalMes('sep').facturado, 1)}.`, boton: 'Ver ventas', ir: 'ventas' },
     { tipo: 'info', ico: '+', titulo: 'Proveedores nuevos', texto: 'Escofet Oliver, Proman Fruits, Coca-Cola y Disbesa no están en el catálogo del stock.', boton: 'Añadir al stock' },
     { tipo: 'ejemplo', ico: '↑', titulo: 'El bife alto sube un 4,9 %', texto: 'Pasa de 28,50 a 29,90 €/kg: el entrecot de 250 g gana un punto de coste.', boton: 'Ver precio', ir: 'precio', ej: true },
   ].map((a) => `
@@ -1005,7 +1163,7 @@ function pintarTablaPlatos() {
       <td class="d">${c ? `${p.falta ? '≥ ' : ''}${eur(c.coste)}` : '—'}</td>
       <td class="d">${eur(p.pvp)}</td>
       <td class="d">${c ? `${p.falta ? '≥ ' : ''}${pct(c.porcentaje)}` : '—'}</td>
-      <td class="d">${ventasDe(p) ? num(ventasDe(p)[1], 0) : '—'}</td>
+      <td class="d">${ventasDe(p, ['sep', 'oct']) ? num(ventasDe(p, ['sep', 'oct'])[1], 0) : '—'}</td>
       <td>${estadoCoste(c ? c.porcentaje : null, !!p.falta)}</td></tr>`;
   }).join('');
 }
@@ -1061,8 +1219,10 @@ function pintarResultado(p) {
   const escala = 0.6;
   const rends = [65, 70, 75, 80, 85, 90];
   $('#c-pvp-sin').value = c.pvpSin.toFixed(2);
-  const v = ventasDe(p);
-  $('#c-vendido').innerHTML = v ? `En ${PERIODO} se vendieron <b class="num">${num(v[1], 0)}</b> raciones, a <b class="num">${eur(v[2] / v[1])}</b> de media (con terraza). Dejaron <b class="num">${p.falta ? 'como mucho ' : ''}${eur(v[2] / 1.10 - v[1] * c.coste)}</b> después de pagar la carne.` : '';
+  const vs = ventasDe(p, ['sep']);
+  const vo = ventasDe(p, ['oct']);
+  const v = ventasDe(p, ['sep', 'oct']);
+  $('#c-vendido').innerHTML = v ? `Se vendieron <b class="num">${num(vs ? vs[1] : 0, 0)}</b> raciones en septiembre y <b class="num">${num(vo ? vo[1] : 0, 0)}</b> en octubre (hasta el 24), a <b class="num">${eur(v[2] / v[1])}</b> de media con la terraza. Entre los dos meses dejaron <b class="num">${p.falta ? 'como mucho ' : ''}${eur(v[2] / 1.10 - v[1] * c.coste)}</b> después de pagar la carne.` : '';
   $('#c-raciones').innerHTML = `De 1 kg comprado salen <b class="num">${num(c.raciones, 1)}</b> raciones de ${p.gramos} g. El jefe lo mide pesando una pieza antes y después de limpiarla.`;
   $('#calc-res').innerHTML = `
         <div>
@@ -1093,7 +1253,7 @@ function pintarOctubre() {
   const total = VENTAS_OCTUBRE.reduce((s, d) => s + d[2], 0);
   const cuentas = VENTAS_OCTUBRE.reduce((s, d) => s + d[1], 0);
   $('#cifras-octubre').innerHTML = `
-    <div class="cifra"><span class="et">Ventas con IVA</span><span class="val">${eur(total, 0)}</span><span class="det">${VENTAS_OCTUBRE.length} días abiertos</span></div>
+    <div class="cifra"><span class="et">Ventas con IVA</span><span class="val">${eur(total, 0)}</span><span class="det">${VENTAS_OCTUBRE.length} días abiertos · informe diario, sacado el 24 a las 20:14</span></div>
     <div class="cifra"><span class="et">Ventas sin IVA (10 %)</span><span class="val">${eur(total / 1.10, 0)}</span><span class="det">la base para comparar con las compras</span></div>
     <div class="cifra"><span class="et">Cuentas cobradas</span><span class="val">${num(cuentas, 0)}</span><span class="det">${num(cuentas / VENTAS_OCTUBRE.length, 0)} por día</span></div>
     <div class="cifra"><span class="et">Ticket medio</span><span class="val">${eur(total / cuentas)}</span><span class="det">por cuenta, no por persona</span></div>`;
@@ -1156,21 +1316,46 @@ function pintarOctubre() {
     <div class="nota-falta" style="margin-top:12px">Solo están 5 albaranes de esa semana, y dos sin su segunda página. Con todos los del mes, lo normal en un restaurante es que salga entre un 28 y un 35 %: hasta entonces esta cifra sale baja y no hay que fiarse de ella.</div>`;
 }
 
+function pintarMeses() {
+  const t = { sep: totalMes('sep'), oct: totalMes('oct') };
+  const fila = (etiqueta, f, fuerte) => `<tr><td>${fuerte ? `<b>${etiqueta}</b>` : etiqueta}</td>${['sep', 'oct'].map((m) => `<td class="d">${fuerte ? `<b>${f(m)}</b>` : f(m)}</td>`).join('')}</tr>`;
+  $('#t-meses').innerHTML = [
+    fila('Facturado', (m) => eur(t[m].facturado, 0)),
+    fila('Descuentos e invitaciones', (m) => `${eur(t[m].descuentos, 0)} <span class="estado ${-t[m].descuentos / t[m].facturado > 0.1 ? 'mal' : 'neutro'}">${pct(-t[m].descuentos / t[m].facturado, 1)}</span>`),
+    fila('Vendido (con IVA)', (m) => eur(t[m].neto, 0), true),
+    fila('Vendido sin IVA', (m) => eur(t[m].neto / 1.10, 0)),
+    fila('Comida', (m) => `${eur(t[m].comida, 0)} · ${pct(t[m].comida / t[m].facturado)}`),
+    fila('Bebida', (m) => `${eur(t[m].bebida, 0)} · ${pct(t[m].bebida / t[m].facturado)}`),
+    fila('Vendido por día', (m) => eur(t[m].neto / VENTAS_MES[m].dias, 0)),
+  ].join('');
+  const ritmo = (t.oct.neto / VENTAS_MES.oct.dias) / (t.sep.neto / VENTAS_MES.sep.dias) - 1;
+  const ritmoBruto = (t.oct.facturado / VENTAS_MES.oct.dias) / (t.sep.facturado / VENTAS_MES.sep.dias) - 1;
+  $('#nota-meses').textContent = `Por día natural, octubre va un ${pct(-ritmo)} por debajo de septiembre. Antes de descuentos la diferencia es del ${pct(-ritmoBruto)}: el resto de la caída son los descuentos.`;
+}
+
 function pintarArticulos() {
-  const comida = ARTICULOS_COMIDA.reduce((s, a) => s + a[2], 0);
-  const bebida = ARTICULOS_BEBIDA.reduce((s, a) => s + a[2], 0);
+  const meses = mesesSel();
+  const opciones = [['sep', 'Septiembre'], ['oct', 'Octubre'], ['ambos', 'Los dos']];
+  $('#filtro-mes').innerHTML = opciones.map(([id, n]) => `<button data-mes="${id}" aria-pressed="${mesVentas === id}">${n}</button>`).join('');
+  const comidaL = articulos('comida', meses);
+  const bebidaL = articulos('bebida', meses);
+  const comida = comidaL.reduce((s, a) => s + a[2], 0);
+  const bebida = bebidaL.reduce((s, a) => s + a[2], 0);
+  const descuentos = meses.reduce((s, m) => s + VENTAS_MES[m].descuentos, 0);
   const bruto = comida + bebida;
   $('#cifras-articulos').innerHTML = `
-    <div class="cifra"><span class="et">Vendido, descontadas invitaciones</span><span class="val">${eur(bruto + DESCUENTOS, 0)}</span><span class="det">con IVA · ${PERIODO}</span></div>
+    <div class="cifra"><span class="et">Vendido, descontadas invitaciones</span><span class="val">${eur(bruto + descuentos, 0)}</span><span class="det">con IVA · ${NOMBRE_MESES[mesVentas]}</span></div>
     <div class="cifra"><span class="et">Comida</span><span class="val">${eur(comida, 0)}</span><span class="det">${pct(comida / bruto)} de lo facturado</span></div>
     <div class="cifra"><span class="et">Bebida</span><span class="val">${eur(bebida, 0)}</span><span class="det">${pct(bebida / bruto)} de lo facturado</span></div>
-    <div class="cifra"><span class="et">Descuentos e invitaciones</span><span class="val">${eur(DESCUENTOS, 0)}</span><span class="det">${pct(-DESCUENTOS / bruto, 1)} de lo facturado</span></div>`;
+    <div class="cifra"><span class="et">Descuentos e invitaciones</span><span class="val">${eur(descuentos, 0)}</span><span class="det">${pct(-descuentos / bruto, 1)} de lo facturado</span></div>`;
   const aBarras = (lista, n) => lista.slice(0, n).map(([nombre, uds, imp]) => ({
     etiqueta: nombre.charAt(0) + nombre.slice(1).toLowerCase(), valor: imp, extra: `${num(uds, 0)} unidades`,
   }));
-  barras($('#g-comida'), aBarras(ARTICULOS_COMIDA, 12), comida);
-  barras($('#g-bebida'), aBarras(ARTICULOS_BEBIDA, 8), bebida);
-  const filas = PLATOS.map((p) => ({ p, v: ventasDe(p), c: calcular(p) })).filter(({ v }) => v);
+  $('#bajada-comida').textContent = `Importe con IVA, ${NOMBRE_MESES[mesVentas]}. Las 12 primeras de ${comidaL.length}.`;
+  $('#bajada-bebida').textContent = `Importe con IVA, ${NOMBRE_MESES[mesVentas]}. Las 8 primeras de ${bebidaL.length}.`;
+  barras($('#g-comida'), aBarras(comidaL, 12), comida);
+  barras($('#g-bebida'), aBarras(bebidaL, 8), bebida);
+  const filas = PLATOS.map((p) => ({ p, v: ventasDe(p, meses), c: calcular(p) })).filter(({ v }) => v);
   $('#t-margenes').innerHTML = filas.map(({ p, v, c }) => {
     const [, uds, imp] = v;
     const sinIva = imp / 1.10;
@@ -1183,27 +1368,9 @@ function pintarArticulos() {
 }
 
 function pintarVentas() {
-  pintarOctubre();
+  pintarMeses();
   pintarArticulos();
-  const [a23, , a25] = VENTAS_ANIO;
-  const top = [...VENTAS_PLATOS].sort((x, y) => y[3] - x[3])[0];
-  $('#cifras-ventas').innerHTML = `
-    <div class="cifra"><span class="et">Noches con ventas después de las 23:00</span><span class="val">${a25.noches}</span><span class="det">en 2025 · ${a23.noches} en 2023 (${pct(a25.noches / a23.noches - 1)})</span></div>
-    <div class="cifra"><span class="et">Unidades por noche</span><span class="val">${num(a25.uds / a25.noches, 0)}</span><span class="det">en 2025 · ${num(a23.uds / a23.noches, 0)} en 2023 (${pct((a25.uds / a25.noches) / (a23.uds / a23.noches) - 1)})</span></div>
-    <div class="cifra"><span class="et">Plato principal más vendido</span><span class="val" style="font-size:1.25rem">${esc(top[0])}</span><span class="det">${top[3]} raciones en 2025 · ${top[1]} en 2023</span></div>
-    <div class="cifra"><span class="et">Importes de este histórico</span><span class="val" style="font-size:1.25rem">No fiables</span><span class="det">el TPV exportó 2022–2025 sin precios; solo valen las cantidades</span></div>`;
-  const max = Math.max(...VENTAS_ANIO.map((a) => a.uds));
-  $('#g-anios').innerHTML = VENTAS_ANIO.map((a, i) => {
-    const prev = VENTAS_ANIO[i - 1];
-    return `<div class="col" data-tip="${a.anio} · ${num(a.uds, 0)} unidades · ${a.noches} noches${prev ? ` · ${pct(a.uds / prev.uds - 1)} vs ${prev.anio}` : ''}">
-      <span class="v">${num(a.uds, 0)}</span><i style="height:${(a.uds / max) * 170}px"></i></div>`;
-  }).join('');
-  $('#g-anios-et').innerHTML = VENTAS_ANIO.map((a, i) => `<span>${a.anio}${i ? `<small>${pct(a.uds / VENTAS_ANIO[i - 1].uds - 1)}</small>` : '<small>&nbsp;</small>'}</span>`).join('');
-  $('#t-ventas').innerHTML = VENTAS_PLATOS.map(([n, a, b, c]) => {
-    const cambio = c / a - 1;
-    return `<tr><td>${esc(n)}</td><td class="d">${a}</td><td class="d">${b}</td><td class="d"><b>${c}</b></td>
-      <td class="d"><span class="estado ${cambio < -0.5 ? 'mal' : cambio < -0.2 ? 'aviso' : cambio > 0 ? 'bien' : 'neutro'}">${cambio > 0 ? '+' : ''}${pct(cambio)}</span></td></tr>`;
-  }).join('');
+  pintarOctubre();
 }
 
 function pintarResultadoSiHay() {
@@ -1251,6 +1418,8 @@ document.addEventListener('click', (ev) => {
   if (fp) { platoSel = fp.dataset.plato; pintarPlatos(); if (vista !== 'escandallos') mostrar('escandallos'); return; }
   const fi = t.closest('[data-ing]');
   if (fi) { ingSel = fi.dataset.ing; return pintarPrecios(); }
+  const fm = t.closest('[data-mes]');
+  if (fm) { mesVentas = fm.dataset.mes; return pintarArticulos(); }
   const fc = t.closest('[data-cat]');
   if (fc) { catPrecios = fc.dataset.cat; return pintarPrecios(); }
   const acc = t.closest('[data-accion]');
