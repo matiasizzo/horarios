@@ -77,7 +77,9 @@ export async function leerArchivo(ruta) {
   }
   try {
     const archivo = await github(`contents/${ruta}?ref=${encodeURIComponent(RAMA)}`);
-    return { texto: Buffer.from(archivo.content, 'base64').toString('utf8'), sha: archivo.sha };
+    // Pasado 1 MB, GitHub no manda el contenido aquí: hay que pedirlo como blob.
+    const contenido = archivo.content || (await github(`git/blobs/${archivo.sha}`)).content;
+    return { texto: Buffer.from(contenido, 'base64').toString('utf8'), sha: archivo.sha };
   } catch (e) {
     if (e.status === 404) return null;
     throw e;

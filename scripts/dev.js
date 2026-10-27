@@ -6,7 +6,7 @@ import path from 'node:path';
 const PUERTO = Number(process.env.PORT) || 3000;
 const TIPOS = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
-  '.png': 'image/png', '.webmanifest': 'application/manifest+json',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.webmanifest': 'application/manifest+json',
 };
 
 function adaptarRes(res) {

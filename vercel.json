@@ -1,5 +1,8 @@
 {
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)data/avisos.json' ':(exclude)data/stock.json'",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)data/avisos.json' ':(exclude)data/stock.json' ':(exclude)data/gestion.json'",
+  "functions": {
+    "api/gestion.js": { "maxDuration": 60 }
+  },
   "headers": [
     {
       "source": "/data/(.*)",

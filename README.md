@@ -5,7 +5,7 @@ Webapp para consultar y organizar los horarios semanales de sala y cocina.
 - **Empleados** (`/`): eligen su nombre y ven su semana; también pueden ver todo el equipo por día o la semana completa, y los horarios pasados.
 - **Editor** (`/admin.html`): protegido con PIN. Se edita en la tablet, se crean semanas nuevas copiando la anterior, se exporta la imagen para WhatsApp y se publica.
 - **Control de stock** (`/stock.html`): los cocineros cuentan su zona en el móvil y el jefe de cocina recibe el pedido agrupado por proveedor.
-- **Maqueta de gestión** (`/gestion.html`): muestra de cómo se verían albaranes, precios de compra, escandallos y ventas. No guarda nada: los datos van dentro de la página.
+- **Gestión** (`/gestion.html`): para la dueña, en tablet o web. Albaranes y facturas (se leen solos desde la foto), precios de compra, escandallos y ventas del TPV.
 
 ## Cómo funciona sin base de datos
 
@@ -20,7 +20,8 @@ Todos los horarios viven en `data/horarios.json`. Al pulsar **Publicar**, la fun
 | `GITHUB_BRANCH` | Rama que publica Vercel (por defecto `main`) |
 | `GITHUB_REPO` | Opcional, por defecto `matiasizzo/horarios` |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Claves de los avisos push. Se generan en el editor con "Configurar avisos" |
-| `STOCK_CLAVE` | Clave con la que se cifra `data/stock.json`. Si se pierde o se cambia, el stock no se puede leer |
+| `STOCK_CLAVE` | Clave con la que se cifran `data/stock.json` y `data/gestion.json`. Si se pierde o se cambia, no se pueden leer |
+| `ANTHROPIC_API_KEY` | Opcional. Clave de la API de Anthropic para leer los albaranes desde la foto; sin ella se rellenan a mano |
 
 ## Avisos push
 
@@ -33,10 +34,21 @@ Cada empleado los activa desde su pantalla (en iPhone hace falta añadir la web 
 - Los PINs del jefe y de los cocineros se crean en **Ajustes** entrando con el `ADMIN_PIN`.
 - Catálogo, proveedores (con sus teléfonos), pedidos e historial viven en `data/stock.json`, **cifrado** con `STOCK_CLAVE` porque el repo es público. Como con los avisos, los commits que solo cambian ese archivo no vuelven a desplegar la web.
 
+## Gestión
+
+- **Acceso**: con la contraseña de la dueña (se crea en *Ajustes* entrando con el `ADMIN_PIN`) o con el `ADMIN_PIN`.
+- **Albaranes y facturas**: se suben fotos o PDF. Cada página se envía a Claude (`api/_lector.js`), que devuelve proveedor, número, fecha, totales y líneas; la dueña las revisa contra el papel y las guarda. Si varias fotos son documentos distintos, se leen y se guardan todos como "por revisar". Lo que corrige (el nombre de cada producto de cada proveedor) se recuerda para el siguiente. Avisa si las líneas no cuadran con la base, si faltan páginas, si un documento ya estaba subido y si se cobra algo marcado como no entregado (con el texto de la reclamación ya escrito).
+- **Fotos**: no se guardan en el servidor, solo en el dispositivo donde se subieron (IndexedDB).
+- **Precios**: último precio de cada ingrediente, su historial y las subidas. Un ingrediente se puede renombrar o unir con otro en todos los albaranes a la vez.
+- **Escandallos**: cada plato de la carta puede tener varios ingredientes (cantidad en crudo, rendimiento tras limpiar y precio del último albarán o escrito a mano). Se compara con el precio de carta y el objetivo de coste.
+- **Ventas**: se importan los CSV del TPV, el diario (`Fecha|Documentos|Importe|Promedio`) y el de ventas por artículo de cada mes (`Nombre|Unidades|Importe`, sin fechas: se indica el mes al importarlo).
+- Todo vive en `data/gestion.json`, cifrado con `STOCK_CLAVE`. Los commits que solo cambian ese archivo no vuelven a desplegar la web.
+- La lectura usa el modelo `claude-opus-5-5` con `fallbacks: "default"` (si el modelo rechaza una petición, la API la repite con el modelo de reserva). Cuesta del orden de 5 a 10 céntimos por página.
+
 ## Probar en local
 
 ```sh
 npm run dev   # http://localhost:3000 — PIN 123456, guarda en el archivo local
 ```
 
-Para el stock hace falta además `STOCK_CLAVE` en el entorno (`STOCK_CLAVE=… npm run dev`).
+Para el stock y la gestión hace falta además `STOCK_CLAVE` en el entorno (`STOCK_CLAVE=… npm run dev`); para la lectura de albaranes, `ANTHROPIC_API_KEY`.
